@@ -1,12 +1,9 @@
 package com.labs.vic.labspeedometer;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
-import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -23,10 +20,15 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements LocationListener {
 
-    private TextView mTextMessage;
-    private TextView mTextMessage2;
+    public static final int MIN_TIME = 100;
+    public static final int MIN_DISTANCE = 0;
 
-    private LocationManager mLocationManager;
+    private TextView textMessage;
+    private TextView textMessage2;
+
+    private Location previousLocation;
+
+    private LocationManager locationManager;
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -35,10 +37,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
             switch (item.getItemId()) {
                 case R.id.navigation_home:
-                    mTextMessage.setText(R.string.title_home);
+                    textMessage.setText(R.string.title_home);
                     return true;
                 case R.id.navigation_units:
-                    mTextMessage.setText(R.string.title_units);
+                    textMessage.setText(R.string.title_units);
                     return true;
                 case R.id.navigation_gps:
                     startActivity(new Intent(
@@ -54,35 +56,23 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         super.onResume();
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
             Log.i("Location", "No permission");
             return;
         }
-        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, this);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME, MIN_DISTANCE, this);
         Log.i("Location", "Resumed");
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        mLocationManager.removeUpdates(this);
+        locationManager.removeUpdates(this);
         Log.i("Location", "Paused");
     }
 
-    private void showLocation(Location location) {
-        if (location == null) {
-            Log.i("Location", "Not available");
-            return;
-        }
-
-        mTextMessage.setText(String.format(Locale.getDefault(), "%.4f", location.getLatitude()));
-        mTextMessage2.setText(String.format(Locale.getDefault(), "%.4f", location.getLongitude()));
+    private void updateView(final Location location) {
+        textMessage.setText(String.format(Locale.getDefault(), "%f", location.getLatitude()));
+        textMessage2.setText(String.format(Locale.getDefault(), "%f", location.getLongitude()));
     }
 
     @Override
@@ -90,35 +80,44 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mTextMessage = findViewById(R.id.message);
-        mTextMessage2 = findViewById(R.id.message2);
+        textMessage = findViewById(R.id.message);
+        textMessage2 = findViewById(R.id.message2);
         BottomNavigationView navigationView = findViewById(R.id.navigation);
 
         navigationView.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
-        mLocationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        Location location = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
         if (location != null) {
             onLocationChanged(location);
         }
     }
 
     @Override
-    public void onLocationChanged(Location location) {
-        showLocation(location);
+    public void onLocationChanged(final Location location) {
+        if (location == null) {
+            Log.i("Location", "Not available");
+            return;
+        }
+
+        updateView(location);
+
+        if (previousLocation != null) {
+            double distance = previousLocation.distanceTo(location);
+            double timeElapsed = location.getTime() - previousLocation.getTime();
+            Log.i("Location", "Distance: " + distance + " Elapsed: " + timeElapsed);
+            Log.i("Location", "Speed: " + (double)Math.round(distance/timeElapsed * 100) / 100 + " m/s");
+            Log.i("Location", "Speed2: " + location.getSpeed() + " m/s");
+        }
+
         Log.i("Location", "Latitude: " + location.getLatitude() +
                 ", Longitude: " + location.getLongitude());
+
+        previousLocation = location;
     }
 
     @Override
