@@ -3,4 +3,7 @@
     <string name="title_home">Home</string>
     <string name="title_units">Units</string>
     <string name="title_gps">GPS</string>
+    <string name="default_speed">0.0 m/s</string>
+    <string name="title_latitude">Latitude</string>
+    <string name="title_longitude">Longitude</string>
 </resources>
