@@ -20,8 +20,9 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements LocationListener {
 
-    public static final int MIN_TIME = 1000;
-    public static final int MIN_DISTANCE = 0;
+    private static final int MIN_TIME = 0;
+    private static final int MIN_DISTANCE = 0;
+    private static final double NANOS_TO_SEC = Math.pow(10, -9);
 
     private TextView latitudeView;
     private TextView longitudeView;
@@ -33,7 +34,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
     private LocationManager locationManager;
 
-//    private Handler handler;
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
 
@@ -96,12 +96,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         navigationView.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-
-//        handler = new Handler();
     }
-
-//    private void updateStatus() {
-//    }
 
     @Override
     public void onLocationChanged(final Location location) {
@@ -114,16 +109,18 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
         if (previousLocation != null) {
             double distance = previousLocation.distanceTo(location);
-            double timeElapsed = location.getTime() - previousLocation.getTime();
+            double timeElapsed = NANOS_TO_SEC * (location.getElapsedRealtimeNanos() -
+                                  previousLocation.getElapsedRealtimeNanos());
 
             double speed = distance/timeElapsed;
             double speed2 = location.getSpeed();
 
+            Log.i("Location", "Time: " + timeElapsed + " s");
             Log.i("Location", "Speed: " + speed + " m/s");
             Log.i("Location", "Speed2: " + speed2 + " m/s");
 
             speedView1.setText(String.format(Locale.getDefault(), "%.3f m/s", speed));
-            this.speedView2.setText(String.format(Locale.getDefault(), "%.1f m/s", speed2));
+            speedView2.setText(String.format(Locale.getDefault(), "%.1f m/s", speed2));
         }
 
         Log.i("Location", "Latitude: " + location.getLatitude() +
