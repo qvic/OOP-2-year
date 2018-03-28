@@ -13,23 +13,23 @@ interface Consumer<T> {
 }
 
 enum SpeedUnit {
-    MS (1, Resources.getSystem().getString(R.string.speed_m_s)),
-    KMH (3.6, Resources.getSystem().getString(R.string.speed_km_h));
+    MS (1, R.string.speed_m_s),
+    KMH (3.6, R.string.speed_km_h);
 
     private final double multiplier;
-    private final String name;
+    private final int stringResource;
 
-    SpeedUnit(double multiplier, String name) {
+    SpeedUnit(double multiplier, int stringResource) {
         this.multiplier = multiplier;
-        this.name = name;
+        this.stringResource = stringResource;
     }
 
     public double getMultiplier() {
         return multiplier;
     }
 
-    public String getName() {
-        return name;
+    public int getStringResource() {
+        return stringResource;
     }
 
     public static double convertMS(SpeedUnit to, double speed) {

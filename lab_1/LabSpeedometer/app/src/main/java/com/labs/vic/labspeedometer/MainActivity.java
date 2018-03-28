@@ -110,8 +110,10 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void accept(Double speed) {
                         speedView1.setText(
-                                String.format(Locale.getDefault(), "%.3f %s",
-                                        speed, speedProvider.getSpeedUnit().getName()));
+                                String.format(
+                                        Locale.getDefault(), "%.3f %s",
+                                        speed,
+                                        getString(speedProvider.getSpeedUnit().getStringResource())));
                     }
                 },
                 new Consumer<Double>() {
@@ -119,7 +121,8 @@ public class MainActivity extends AppCompatActivity {
                     public void accept(Double speed) {
                         speedView2.setText(
                                 String.format(Locale.getDefault(), "%.3f %s",
-                                        speed, speedProvider.getSpeedUnit().getName()));
+                                        speed,
+                                        getString(speedProvider.getSpeedUnit().getStringResource())));
                     }
                 },
                 new Consumer<Location>() {
