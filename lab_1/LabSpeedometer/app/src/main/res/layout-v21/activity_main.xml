@@ -38,22 +38,6 @@
         app:layout_constraintLeft_toLeftOf="parent" />
 
     <android.support.design.widget.BottomNavigationView
-        android:id="@+id/units_menu"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="0dp"
-        android:layout_marginStart="0dp"
-        android:background="@color/colorPrimary"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:menu="@menu/units"
-        app:itemTextColor="@android:color/background_light"
-        app:itemIconTint="@android:color/background_light"
-        app:itemBackground="@drawable/bottom_navigation"
-        android:visibility="invisible"/>
-
-    <android.support.design.widget.BottomNavigationView
         android:id="@+id/navigation"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -64,6 +48,21 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:menu="@menu/navigation" />
+
+    <android.support.design.widget.BottomNavigationView
+        android:id="@+id/units_menu"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="0dp"
+        android:layout_marginStart="0dp"
+        android:background="?android:attr/windowBackground"
+        app:layout_constraintBottom_toTopOf="@id/navigation"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:menu="@menu/units"
+        android:paddingBottom="10dp"
+        android:backgroundTint="@color/colorPrimary"
+        app:itemTextColor="@color/colorAccent"/>
 
     <TextView
         android:id="@+id/display1"
