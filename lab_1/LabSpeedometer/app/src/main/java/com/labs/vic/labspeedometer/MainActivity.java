@@ -131,9 +131,9 @@ public class MainActivity extends AppCompatActivity {
                         longitudeView.setText(String.format(Locale.getDefault(), "%s: %f",
                                 getString(R.string.title_longitude), location.getLatitude()));
 
-                        accuracyView.setText(String.format(Locale.getDefault(), "%d satellites give %.1f m %s",
+                        accuracyView.setText(String.format(Locale.getDefault(), "%d satellites give %.1f m accuracy",
                                 location.getExtras().getInt("satellites"),
-                                location.getAccuracy(), getString(R.string.title_accuracy).toLowerCase()));
+                                location.getAccuracy()));
                     }
                 });
     }
@@ -143,7 +143,7 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "No permission to use GPS", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.gps_no_permission, Toast.LENGTH_LONG).show();
             return;
         }
 

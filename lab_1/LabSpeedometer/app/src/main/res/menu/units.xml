@@ -2,11 +2,11 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/units_ms"
-        android:title="m/s"
+        android:title="@string/speed_m_s"
         android:icon="@drawable/ic_home_black_24dp"/>
 
     <item
         android:id="@+id/units_kmh"
-        android:title="km/h"
+        android:title="@string/speed_km_h"
         android:icon="@drawable/ic_home_black_24dp"/>
 </menu>

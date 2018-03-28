@@ -1,6 +1,7 @@
 package com.labs.vic.labspeedometer;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -12,7 +13,8 @@ interface Consumer<T> {
 }
 
 enum SpeedUnit {
-    MS (1, "m/s"), KMH (3.6, "km/h");
+    MS (1, Resources.getSystem().getString(R.string.speed_m_s)),
+    KMH (3.6, Resources.getSystem().getString(R.string.speed_km_h));
 
     private final double multiplier;
     private final String name;
