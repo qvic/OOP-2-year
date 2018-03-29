@@ -55,6 +55,8 @@ class GpsSpeedProvider implements LocationListener {
 
     private Context context;
 
+    private boolean isGpsUpdating = false;
+
     GpsSpeedProvider(Context context,
                      Consumer<Double> onSpeedChanged,
                      Consumer<Double> onNativeSpeedChanged,
@@ -82,6 +84,8 @@ class GpsSpeedProvider implements LocationListener {
             return;
         }
 
+        isGpsUpdating = true;
+
         Log.i("Location", String.valueOf(location.getExtras().getInt("satellites")));
 
         onLocationChanged.accept(location);
@@ -101,6 +105,14 @@ class GpsSpeedProvider implements LocationListener {
 
         onSpeedChanged.accept(SpeedUnit.convertMS(speedUnit, speed));
         onNativeSpeedChanged.accept(SpeedUnit.convertMS(speedUnit, speedNative));
+    }
+
+    boolean isGpsUpdating() {
+        return isGpsUpdating;
+    }
+
+    boolean isGpsEnabled() {
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
 
     @Override

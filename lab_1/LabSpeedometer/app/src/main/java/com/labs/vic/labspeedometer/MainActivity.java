@@ -32,13 +32,23 @@ public class MainActivity extends AppCompatActivity {
     private BottomNavigationView.OnNavigationItemSelectedListener onUnitsSelected = new BottomNavigationView.OnNavigationItemSelectedListener() {
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-            switch (item.getItemId()) {
-                case R.id.units_ms:
+
+            int itemId = item.getItemId();
+            if (itemId == R.id.units_ms || itemId == R.id.units_kmh) {
+                if (itemId == R.id.units_ms) {
                     speedProvider.setSpeedUnit(SpeedUnit.MS);
-                    return true;
-                case R.id.units_kmh:
+                } else {
                     speedProvider.setSpeedUnit(SpeedUnit.KMH);
-                    return true;
+                }
+
+                if(!speedProvider.isGpsUpdating()) {
+                    String defaultSpeed = String.format(Locale.getDefault(), getString(R.string.speed_format),
+                            0.0, getString(speedProvider.getSpeedUnit().getStringResource()));
+                    speedView1.setText(defaultSpeed);
+                    speedView2.setText(defaultSpeed);
+                }
+
+                return true;
             }
             return false;
         }
@@ -111,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
                     public void accept(Double speed) {
                         speedView1.setText(
                                 String.format(
-                                        Locale.getDefault(), "%.3f %s",
+                                        Locale.getDefault(), getString(R.string.speed_format),
                                         speed,
                                         getString(speedProvider.getSpeedUnit().getStringResource())));
                     }
@@ -120,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void accept(Double speed) {
                         speedView2.setText(
-                                String.format(Locale.getDefault(), "%.3f %s",
+                                String.format(Locale.getDefault(), getString(R.string.speed_format),
                                         speed,
                                         getString(speedProvider.getSpeedUnit().getStringResource())));
                     }
@@ -139,6 +149,11 @@ public class MainActivity extends AppCompatActivity {
                                 location.getAccuracy()));
                     }
                 });
+
+        String defaultSpeed = String.format(Locale.getDefault(), getString(R.string.speed_format),
+                0.0, getString(speedProvider.getSpeedUnit().getStringResource()));
+        speedView1.setText(defaultSpeed);
+        speedView2.setText(defaultSpeed);
     }
 
     @Override
