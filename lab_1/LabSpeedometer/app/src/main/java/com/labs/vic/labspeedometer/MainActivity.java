@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
+    private BottomNavigationView.OnNavigationItemSelectedListener onNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
 
         @Override
@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    private BottomNavigationView.OnNavigationItemReselectedListener mOnNavigationItemReselectedListener
+    private BottomNavigationView.OnNavigationItemReselectedListener onNavigationItemReselectedListener
             = new BottomNavigationView.OnNavigationItemReselectedListener() {
         @Override
         public void onNavigationItemReselected(@NonNull MenuItem item) {
@@ -107,16 +107,17 @@ public class MainActivity extends AppCompatActivity {
         speedView1 = findViewById(R.id.display1);
         speedView2 = findViewById(R.id.display2);
 
+        unitsMenuHidden = true;
         unitsMenuView = findViewById(R.id.units_menu);
         unitsMenuView.setOnNavigationItemSelectedListener(onUnitsSelected);
 
         BottomNavigationView navigationView = findViewById(R.id.navigation);
 
-        navigationView.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
-        navigationView.setOnNavigationItemReselectedListener(mOnNavigationItemReselectedListener);
+        navigationView.setOnNavigationItemSelectedListener(onNavigationItemSelectedListener);
+        navigationView.setOnNavigationItemReselectedListener(onNavigationItemReselectedListener);
 
-        speedProvider = new GpsSpeedProvider(this,
-                new Consumer<Double>() {
+        speedProvider = new GpsSpeedProvider.Builder(this)
+                .setOnSpeedChanged(new Consumer<Double>() {
                     @Override
                     public void accept(Double speed) {
                         speedView1.setText(
@@ -125,8 +126,8 @@ public class MainActivity extends AppCompatActivity {
                                         speed,
                                         getString(speedProvider.getSpeedUnit().getStringResource())));
                     }
-                },
-                new Consumer<Double>() {
+                })
+                .setOnNativeSpeedChanged(new Consumer<Double>() {
                     @Override
                     public void accept(Double speed) {
                         speedView2.setText(
@@ -134,8 +135,8 @@ public class MainActivity extends AppCompatActivity {
                                         speed,
                                         getString(speedProvider.getSpeedUnit().getStringResource())));
                     }
-                },
-                new Consumer<Location>() {
+                })
+                .setOnLocationChanged(new Consumer<Location>() {
                     @Override
                     public void accept(Location location) {
                         latitudeView.setText(String.format(Locale.getDefault(), "%s: %f",
@@ -148,7 +149,8 @@ public class MainActivity extends AppCompatActivity {
                                 location.getExtras().getInt("satellites"),
                                 location.getAccuracy()));
                     }
-                });
+                })
+                .build();
 
         String defaultSpeed = String.format(Locale.getDefault(), getString(R.string.speed_format),
                 0.0, getString(speedProvider.getSpeedUnit().getStringResource()));
@@ -159,6 +161,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+
+        unitsMenuHidden = true;
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(this, R.string.gps_no_permission, Toast.LENGTH_LONG).show();

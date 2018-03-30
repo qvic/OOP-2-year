@@ -39,35 +39,64 @@ enum SpeedUnit {
 
 class GpsSpeedProvider implements LocationListener {
 
+    static class Builder {
+        private Context context;
+        private Consumer<Double> onSpeedChanged = new Consumer<Double>() {
+            @Override
+            public void accept(Double aDouble) {}
+        };
+        private Consumer<Double> onNativeSpeedChanged = new Consumer<Double>() {
+            @Override
+            public void accept(Double aDouble) {}
+        };
+        private Consumer<Location> onLocationChanged = new Consumer<Location>() {
+            @Override
+            public void accept(Location location) {}
+        };
+
+        Builder(Context context) {
+            this.context = context;
+        }
+
+        Builder setOnSpeedChanged(Consumer<Double> onSpeedChanged) {
+            this.onSpeedChanged = onSpeedChanged;
+            return this;
+        }
+
+        Builder setOnNativeSpeedChanged(Consumer<Double> onNativeSpeedChanged) {
+            this.onNativeSpeedChanged = onNativeSpeedChanged;
+            return this;
+        }
+
+        Builder setOnLocationChanged(Consumer<Location> onLocationChanged) {
+            this.onLocationChanged = onLocationChanged;
+            return this;
+        }
+
+        GpsSpeedProvider build() {
+            return new GpsSpeedProvider(this);
+        }
+    }
+
     private static final int MIN_TIME = 0;
     private static final int MIN_DISTANCE = 0;
     private static final double SECONDS_IN_NANO = Math.pow(10, -9);
 
     private SpeedUnit speedUnit = SpeedUnit.MS;
-
     private Consumer<Double> onSpeedChanged;
     private Consumer<Double> onNativeSpeedChanged;
     private Consumer<Location> onLocationChanged;
 
     private LocationManager locationManager;
-
     private Location previousLocation;
-
-    private Context context;
 
     private boolean isGpsUpdating = false;
 
-    GpsSpeedProvider(Context context,
-                     Consumer<Double> onSpeedChanged,
-                     Consumer<Double> onNativeSpeedChanged,
-                     Consumer<Location> onLocationChanged) {
-
-        this.onSpeedChanged = onSpeedChanged;
-        this.onNativeSpeedChanged = onNativeSpeedChanged;
-        this.onLocationChanged = onLocationChanged;
-
-        this.context = context;
-        this.locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+    GpsSpeedProvider(Builder b) {
+        this.onSpeedChanged = b.onSpeedChanged;
+        this.onNativeSpeedChanged = b.onNativeSpeedChanged;
+        this.onLocationChanged = b.onLocationChanged;
+        this.locationManager = (LocationManager) b.context.getSystemService(Context.LOCATION_SERVICE);
     }
 
     void setSpeedUnit(SpeedUnit speedUnit) {
@@ -135,6 +164,7 @@ class GpsSpeedProvider implements LocationListener {
     }
 
     void pause() {
+        isGpsUpdating = false;
         locationManager.removeUpdates(this);
     }
 }
