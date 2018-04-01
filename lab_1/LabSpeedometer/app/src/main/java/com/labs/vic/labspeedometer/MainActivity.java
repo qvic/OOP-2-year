@@ -14,6 +14,9 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.labs.vic.labspeedometer.helpers.Consumer;
+import com.labs.vic.labspeedometer.helpers.SpeedUnit;
+
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {

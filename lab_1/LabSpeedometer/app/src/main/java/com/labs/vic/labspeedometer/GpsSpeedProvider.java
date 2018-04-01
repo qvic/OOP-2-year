@@ -1,41 +1,15 @@
 package com.labs.vic.labspeedometer;
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
 
-interface Consumer<T> {
-    void accept(T t);
-}
+import com.labs.vic.labspeedometer.helpers.Consumer;
+import com.labs.vic.labspeedometer.helpers.SpeedUnit;
 
-enum SpeedUnit {
-    MS (1, R.string.speed_m_s),
-    KMH (3.6, R.string.speed_km_h);
-
-    private final double multiplier;
-    private final int stringResource;
-
-    SpeedUnit(double multiplier, int stringResource) {
-        this.multiplier = multiplier;
-        this.stringResource = stringResource;
-    }
-
-    public double getMultiplier() {
-        return multiplier;
-    }
-
-    public int getStringResource() {
-        return stringResource;
-    }
-
-    public static double convertMS(SpeedUnit to, double speed) {
-        return speed * to.getMultiplier();
-    }
-}
 
 class GpsSpeedProvider implements LocationListener {
 
