@@ -14,22 +14,26 @@ import com.labs.vic.labspeedometer.helpers.SpeedUnit;
 class GpsSpeedProvider implements LocationListener {
 
     static class Builder {
-        private Context context;
+        private LocationManager locationManager;
+        private String locationProvider = LOCATION_PROVIDER;
+
         private Consumer<Double> onSpeedChanged = new Consumer<Double>() {
             @Override
             public void accept(Double aDouble) {}
         };
+
         private Consumer<Double> onNativeSpeedChanged = new Consumer<Double>() {
             @Override
             public void accept(Double aDouble) {}
         };
+
         private Consumer<Location> onLocationChanged = new Consumer<Location>() {
             @Override
             public void accept(Location location) {}
         };
 
-        Builder(Context context) {
-            this.context = context;
+        Builder(LocationManager locationManager) {
+            this.locationManager = locationManager;
         }
 
         Builder setOnSpeedChanged(Consumer<Double> onSpeedChanged) {
@@ -47,6 +51,11 @@ class GpsSpeedProvider implements LocationListener {
             return this;
         }
 
+        Builder setLocationProvider(String locationProvider) {
+            this.locationProvider = locationProvider;
+            return this;
+        }
+
         GpsSpeedProvider build() {
             return new GpsSpeedProvider(this);
         }
@@ -55,6 +64,7 @@ class GpsSpeedProvider implements LocationListener {
     private static final int MIN_TIME = 0;
     private static final int MIN_DISTANCE = 0;
     private static final double SECONDS_IN_NANO = Math.pow(10, -9);
+    private static final String LOCATION_PROVIDER = LocationManager.GPS_PROVIDER;
 
     private SpeedUnit speedUnit = SpeedUnit.MS;
     private Consumer<Double> onSpeedChanged;
@@ -63,6 +73,7 @@ class GpsSpeedProvider implements LocationListener {
 
     private LocationManager locationManager;
     private Location previousLocation;
+    private String locationProvider;
 
     private boolean isGpsUpdating = false;
 
@@ -70,7 +81,8 @@ class GpsSpeedProvider implements LocationListener {
         this.onSpeedChanged = b.onSpeedChanged;
         this.onNativeSpeedChanged = b.onNativeSpeedChanged;
         this.onLocationChanged = b.onLocationChanged;
-        this.locationManager = (LocationManager) b.context.getSystemService(Context.LOCATION_SERVICE);
+        this.locationManager = b.locationManager;
+        this.locationProvider = b.locationProvider;
     }
 
     void setSpeedUnit(SpeedUnit speedUnit) {
@@ -88,26 +100,26 @@ class GpsSpeedProvider implements LocationListener {
         }
 
         isGpsUpdating = true;
-
-        Log.i("Location", String.valueOf(location.getExtras().getInt("satellites")));
-
         onLocationChanged.accept(location);
 
-        // weighted average or smth
         if (previousLocation == null) {
             previousLocation = location;
             return;
         }
 
-        double distance = previousLocation.distanceTo(location);
-        double timeElapsed = SECONDS_IN_NANO * (location.getElapsedRealtimeNanos() -
-                previousLocation.getElapsedRealtimeNanos());
-
-        double speed = distance / timeElapsed;
+        double speed = calculateSpeed(location);
         double speedNative = location.getSpeed();
 
         onSpeedChanged.accept(SpeedUnit.convertMS(speedUnit, speed));
         onNativeSpeedChanged.accept(SpeedUnit.convertMS(speedUnit, speedNative));
+    }
+
+    private double calculateSpeed(Location location) {
+        double distance = previousLocation.distanceTo(location);
+        double timeElapsed = SECONDS_IN_NANO * (location.getElapsedRealtimeNanos() -
+                previousLocation.getElapsedRealtimeNanos());
+
+        return distance / timeElapsed;
     }
 
     boolean isGpsUpdating() {
@@ -134,7 +146,7 @@ class GpsSpeedProvider implements LocationListener {
     }
 
     void resume() throws SecurityException {
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME, MIN_DISTANCE, this);
+        locationManager.requestLocationUpdates(locationProvider, MIN_TIME, MIN_DISTANCE, this);
     }
 
     void pause() {

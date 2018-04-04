@@ -1,9 +1,11 @@
 package com.labs.vic.labspeedometer;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
@@ -119,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
         navigationView.setOnNavigationItemSelectedListener(onNavigationItemSelectedListener);
         navigationView.setOnNavigationItemReselectedListener(onNavigationItemReselectedListener);
 
-        speedProvider = new GpsSpeedProvider.Builder(this)
+        speedProvider = new GpsSpeedProvider.Builder((LocationManager) this.getSystemService(Context.LOCATION_SERVICE))
                 .setOnSpeedChanged(new Consumer<Double>() {
                     @Override
                     public void accept(Double speed) {
