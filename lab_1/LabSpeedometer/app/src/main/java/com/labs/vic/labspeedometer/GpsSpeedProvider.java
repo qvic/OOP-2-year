@@ -15,7 +15,16 @@ class GpsSpeedProvider implements LocationListener {
 
     static class Builder {
         private LocationManager locationManager;
-        private String locationProvider = LOCATION_PROVIDER;
+
+        private Runnable onGpsDisabled = new Runnable() {
+            @Override
+            public void run() {}
+        };
+
+        private Runnable onGpsEnabled = new Runnable() {
+            @Override
+            public void run() {}
+        };
 
         private Consumer<Double> onSpeedChanged = new Consumer<Double>() {
             @Override
@@ -51,8 +60,13 @@ class GpsSpeedProvider implements LocationListener {
             return this;
         }
 
-        Builder setLocationProvider(String locationProvider) {
-            this.locationProvider = locationProvider;
+        Builder setOnGpsEnabled(Runnable onGpsEnabled) {
+            this.onGpsEnabled = onGpsEnabled;
+            return this;
+        }
+
+        Builder setOnGpsDisabled(Runnable onGpsDisabled) {
+            this.onGpsDisabled = onGpsDisabled;
             return this;
         }
 
@@ -70,11 +84,11 @@ class GpsSpeedProvider implements LocationListener {
     private Consumer<Double> onSpeedChanged;
     private Consumer<Double> onNativeSpeedChanged;
     private Consumer<Location> onLocationChanged;
+    private Runnable onGpsEnabled;
+    private Runnable onGpsDisabled;
 
     private LocationManager locationManager;
     private Location previousLocation;
-    private String locationProvider;
-
     private boolean isGpsUpdating = false;
 
     GpsSpeedProvider(Builder b) {
@@ -82,7 +96,8 @@ class GpsSpeedProvider implements LocationListener {
         this.onNativeSpeedChanged = b.onNativeSpeedChanged;
         this.onLocationChanged = b.onLocationChanged;
         this.locationManager = b.locationManager;
-        this.locationProvider = b.locationProvider;
+        this.onGpsEnabled = b.onGpsEnabled;
+        this.onGpsDisabled = b.onGpsDisabled;
     }
 
     void setSpeedUnit(SpeedUnit speedUnit) {
@@ -99,7 +114,10 @@ class GpsSpeedProvider implements LocationListener {
             return;
         }
 
-        isGpsUpdating = true;
+        if (!isGpsUpdating) {
+            onGpsEnabled.run();
+            isGpsUpdating = true;
+        }
         onLocationChanged.accept(location);
 
         if (previousLocation == null) {
@@ -129,7 +147,7 @@ class GpsSpeedProvider implements LocationListener {
     }
 
     boolean isGpsEnabled() {
-        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        return locationManager.isProviderEnabled(LOCATION_PROVIDER);
     }
 
     @Override
@@ -144,11 +162,14 @@ class GpsSpeedProvider implements LocationListener {
 
     @Override
     public void onProviderDisabled(String provider) {
-
+        if (provider.equals(LOCATION_PROVIDER)) {
+            isGpsUpdating = false;
+            onGpsDisabled.run();
+        }
     }
 
     void resume() throws SecurityException {
-        locationManager.requestLocationUpdates(locationProvider, MIN_TIME, MIN_DISTANCE, this);
+        locationManager.requestLocationUpdates(LOCATION_PROVIDER, MIN_TIME, MIN_DISTANCE, this);
     }
 
     void pause() {

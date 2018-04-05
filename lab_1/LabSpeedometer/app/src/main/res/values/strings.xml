@@ -10,4 +10,6 @@
     <string name="speed_km_h">km/h</string>
     <string name="gps_no_permission">No permission to use GPS</string>
     <string name="speed_format">%.2f %s</string>
+    <string name="coordinate_format">%s: %f</string>
+    <string name="accuracy_message">%d satellites, %.1f m accuracy</string>
 </resources>

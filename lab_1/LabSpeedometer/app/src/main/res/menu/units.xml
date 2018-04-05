@@ -3,10 +3,10 @@
     <item
         android:id="@+id/units_ms"
         android:title="@string/speed_m_s"
-        android:icon="@drawable/ic_home_black_24dp"/>
+        android:icon="@drawable/ic_arrow_drop_down_black_24dp"/>
 
     <item
         android:id="@+id/units_kmh"
         android:title="@string/speed_km_h"
-        android:icon="@drawable/ic_home_black_24dp"/>
+        android:icon="@drawable/ic_arrow_drop_down_black_24dp"/>
 </menu>
