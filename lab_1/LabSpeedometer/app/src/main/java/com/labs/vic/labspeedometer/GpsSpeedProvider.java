@@ -112,6 +112,8 @@ class GpsSpeedProvider implements LocationListener {
 
         onSpeedChanged.accept(SpeedUnit.convertMS(speedUnit, speed));
         onNativeSpeedChanged.accept(SpeedUnit.convertMS(speedUnit, speedNative));
+
+        previousLocation = location;
     }
 
     private double calculateSpeed(Location location) {

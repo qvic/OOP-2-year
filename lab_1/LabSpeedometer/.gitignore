@@ -82,6 +82,10 @@ obj/
 .idea/dynamic.xml
 .idea/uiDesigner.xml
 
+# IDEA - added
+.idea/caches/
+.idea/codeStyles/
+
 # OS-specific files
 .DS_Store
 .DS_Store?
