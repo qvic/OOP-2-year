@@ -85,6 +85,7 @@ obj/
 # IDEA - added
 .idea/caches/
 .idea/codeStyles/
+.idea/assetWizardSettings.xml
 
 # OS-specific files
 .DS_Store
