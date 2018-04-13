@@ -41,6 +41,22 @@ public class GpsSpeedProviderTest {
     @Mock
     private LocationManager locationManager;
 
+    private abstract class TestConsumer<T> implements Consumer<T> {
+        private int callsCounter = 0;
+
+        @Override
+        public void accept(T t) {
+            acceptTest(t);
+            callsCounter++;
+        }
+
+        int getCallsCounter() {
+            return callsCounter;
+        }
+
+        abstract void acceptTest(T t);
+    }
+
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
@@ -54,8 +70,8 @@ public class GpsSpeedProviderTest {
                     public void accept(Location location) {
                         assertNotNull(location);
 
-                        assertEquals(location.getLatitude(), 50.0, DELTA_L);
-                        assertEquals(location.getLongitude(), 30.0, DELTA_L);
+                        assertEquals(50.0, location.getLatitude(), DELTA_L);
+                        assertEquals(30.0, location.getLongitude(), DELTA_L);
                     }
                 })
                 .build();
@@ -86,10 +102,12 @@ public class GpsSpeedProviderTest {
     @Test
     public void speedChangeTest() {
         GpsSpeedProvider gpsSpeedProvider = new GpsSpeedProvider.Builder(locationManager)
-                .setOnSpeedChanged(new Consumer<Double>() {
+                .setOnSpeedChanged(new TestConsumer<Double>() {
+                    private double[] expectedValues = {10.0, 7.5, 10.0};
+
                     @Override
-                    public void accept(Double speed) {
-                        assertEquals(speed, 10.0, DELTA_S);
+                    void acceptTest(Double speed) {
+                        assertEquals(expectedValues[getCallsCounter()], speed, DELTA_S);
                     }
                 })
                 .build();
@@ -113,13 +131,13 @@ public class GpsSpeedProviderTest {
                 Location loc3 = mock(Location.class);
 
                 doReturn(6 * ONE_SECOND).when(loc3).getElapsedRealtimeNanos();
-                doReturn(40.0f).when(loc2).distanceTo(loc3);
+                doReturn(20.0f).when(loc2).distanceTo(loc3);
 
 
                 Location loc4 = mock(Location.class);
 
                 doReturn(8 * ONE_SECOND).when(loc4).getElapsedRealtimeNanos();
-                doReturn(20.0f).when(loc3).distanceTo(loc4);
+                doReturn(30.0f).when(loc3).distanceTo(loc4);
 
                 gpsSpeedProvider.onLocationChanged(loc1);
                 gpsSpeedProvider.onLocationChanged(loc2);
@@ -148,7 +166,7 @@ public class GpsSpeedProviderTest {
                 .setOnSpeedChanged(new Consumer<Double>() {
                     @Override
                     public void accept(Double speed) {
-                        assertEquals(speed, 36.0, DELTA_S);
+                        assertEquals(36.0, speed, DELTA_S);
                     }
                 })
                 .build();
@@ -170,27 +188,11 @@ public class GpsSpeedProviderTest {
                 doReturn(2 * ONE_SECOND).when(loc2).getElapsedRealtimeNanos();
                 doReturn(10.0f).when(loc1).distanceTo(loc2);
 
-
-                Location loc3 = mock(Location.class);
-
-                doReturn(6 * ONE_SECOND).when(loc3).getElapsedRealtimeNanos();
-                doReturn(40.0f).when(loc2).distanceTo(loc3);
-
-
-                Location loc4 = mock(Location.class);
-
-                doReturn(8 * ONE_SECOND).when(loc4).getElapsedRealtimeNanos();
-                doReturn(20.0f).when(loc3).distanceTo(loc4);
-
                 gpsSpeedProvider.onLocationChanged(loc1);
                 gpsSpeedProvider.onLocationChanged(loc2);
-                gpsSpeedProvider.onLocationChanged(loc3);
-                gpsSpeedProvider.onLocationChanged(loc4);
 
                 verify(loc1, times(1)).distanceTo(any(Location.class));
-                verify(loc2, times(1)).distanceTo(any(Location.class));
-                verify(loc3, times(1)).distanceTo(any(Location.class));
-                verify(loc4, times(0)).distanceTo(any(Location.class));
+                verify(loc2, times(0)).distanceTo(any(Location.class));
 
                 return null;
             }

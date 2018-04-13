@@ -10,14 +10,14 @@ public class SpeedUnitTest {
 
     @Test
     public void convertMStoKMH() {
-        assertEquals(SpeedUnit.convertMS(SpeedUnit.KMH, 123.35), 444.06, DELTA);
-        assertEquals(SpeedUnit.convertMS(SpeedUnit.KMH, 10.0), 36.0, DELTA);
-        assertEquals(SpeedUnit.convertMS(SpeedUnit.KMH, 0.0), 0.0, DELTA);
-        assertEquals(SpeedUnit.convertMS(SpeedUnit.MS, 20.0), 20.0, DELTA);
+        assertEquals(444.06, SpeedUnit.convertMS(SpeedUnit.KMH, 123.35), DELTA);
+        assertEquals(36.0, SpeedUnit.convertMS(SpeedUnit.KMH, 10.0), DELTA);
+        assertEquals(0.0, SpeedUnit.convertMS(SpeedUnit.KMH, 0.0), DELTA);
+        assertEquals(20.0, SpeedUnit.convertMS(SpeedUnit.MS, 20.0), DELTA);
     }
 
     @Test
     public void convertMStoMS() {
-        assertEquals(SpeedUnit.convertMS(SpeedUnit.MS, 20.0), 20.0, DELTA);
+        assertEquals(20.0, SpeedUnit.convertMS(SpeedUnit.MS, 20.0), DELTA);
     }
 }
