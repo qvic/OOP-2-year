@@ -1,14 +1,14 @@
 package com.labs.vic.labspeedometer;
 
-import android.content.Context;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.util.Log;
 
 import com.labs.vic.labspeedometer.helpers.Consumer;
 import com.labs.vic.labspeedometer.helpers.SpeedUnit;
+
+import java.util.LinkedList;
 
 
 class GpsSpeedProvider implements LocationListener {
@@ -79,6 +79,7 @@ class GpsSpeedProvider implements LocationListener {
     private static final int MIN_DISTANCE = 0;
     private static final double SECONDS_IN_NANO = Math.pow(10, -9);
     private static final String LOCATION_PROVIDER = LocationManager.GPS_PROVIDER;
+    private static final int BUFFER_SIZE = 2;
 
     private SpeedUnit speedUnit = SpeedUnit.MS;
     private Consumer<Double> onSpeedChanged;
@@ -88,7 +89,10 @@ class GpsSpeedProvider implements LocationListener {
     private Runnable onGpsDisabled;
 
     private LocationManager locationManager;
+
     private Location previousLocation;
+    private LinkedList<Double> speedBuffer;
+
     private boolean isGpsUpdating = false;
 
     GpsSpeedProvider(Builder b) {
@@ -98,6 +102,8 @@ class GpsSpeedProvider implements LocationListener {
         this.locationManager = b.locationManager;
         this.onGpsEnabled = b.onGpsEnabled;
         this.onGpsDisabled = b.onGpsDisabled;
+
+        this.speedBuffer = new LinkedList<>();
     }
 
     void setSpeedUnit(SpeedUnit speedUnit) {
@@ -118,28 +124,47 @@ class GpsSpeedProvider implements LocationListener {
             onGpsEnabled.run();
             isGpsUpdating = true;
         }
+
         onLocationChanged.accept(location);
 
         if (previousLocation == null) {
             previousLocation = location;
-            return;
+        } else {
+            double speed = calculateSpeed(location);
+            previousLocation = location;
+
+            if (speedBuffer.size() == BUFFER_SIZE) {
+                speedBuffer.remove();
+            }
+            speedBuffer.offer(speed);
+
+            double averageSpeed = calculateAverageBufferSpeed();
+
+            onSpeedChanged.accept(SpeedUnit.convertMS(speedUnit, averageSpeed));
         }
 
-        double speed = calculateSpeed(location);
         double speedNative = location.getSpeed();
 
-        onSpeedChanged.accept(SpeedUnit.convertMS(speedUnit, speed));
         onNativeSpeedChanged.accept(SpeedUnit.convertMS(speedUnit, speedNative));
-
-        previousLocation = location;
     }
 
-    private double calculateSpeed(Location location) {
-        double distance = previousLocation.distanceTo(location);
-        double timeElapsed = SECONDS_IN_NANO * (location.getElapsedRealtimeNanos() -
+    private double calculateSpeed(Location currentLocation) {
+        double distance = previousLocation.distanceTo(currentLocation);
+        double timeElapsed = SECONDS_IN_NANO * (currentLocation.getElapsedRealtimeNanos() -
                 previousLocation.getElapsedRealtimeNanos());
 
         return distance / timeElapsed;
+    }
+
+    private double calculateAverageBufferSpeed() {
+        double speedMeasurementsSum = 0.0;
+        int speedMeasurementsCount = speedBuffer.size();
+
+        for (double speed : speedBuffer) {
+            speedMeasurementsSum += speed;
+        }
+
+        return speedMeasurementsSum / speedMeasurementsCount;
     }
 
     boolean isGpsUpdating() {
