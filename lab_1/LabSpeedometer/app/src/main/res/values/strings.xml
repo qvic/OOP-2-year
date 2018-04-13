@@ -12,4 +12,6 @@
     <string name="speed_format">%.2f %s</string>
     <string name="coordinate_format">%s: %f</string>
     <string name="accuracy_message">%d satellites, %.1f m accuracy</string>
+    <string name="display_small_hint">Native speed</string>
+    <string name="display_large_hint">Speed</string>
 </resources>
