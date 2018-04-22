@@ -8,32 +8,51 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 public class EchoServer implements AutoCloseable {
+
     private ServerSocket serverSocket;
-    private Socket clientSocket;
-    private PrintWriter out;
-    private BufferedReader in;
 
-    public void start(int port) throws IOException {
-        serverSocket = new ServerSocket(port);
-        clientSocket = serverSocket.accept();
-        out = new PrintWriter(clientSocket.getOutputStream(), true);
-        in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+    private static class ClientHandler extends Thread {
+        private Socket clientSocket;
 
-        String inputLine;
-        while ((inputLine = in.readLine()) != null) {
-            if ("exit".equals(inputLine.toLowerCase())) {
-                out.println("Bye");
-                break;
+        ClientHandler(Socket socket) {
+            this.clientSocket = socket;
+        }
+
+        public void run() {
+            try (PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+                 BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))) {
+
+                String inputLine = in.readLine();
+                while (inputLine != null) {
+                    if ("exit".equals(inputLine.toLowerCase())) {
+                        out.println("bye");
+                        break;
+                    }
+                    System.out.println("Got (port " + clientSocket.getPort() + "): " + inputLine);
+                    out.println(inputLine);
+
+                    inputLine = in.readLine();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                try {
+                    clientSocket.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
             }
-            out.println(inputLine);
-            System.out.println("Got " + inputLine);
+
+        }
+    }
+
+    public void listen(int port) throws IOException {
+        serverSocket = new ServerSocket(port);
+        while (true) {
+            new ClientHandler(serverSocket.accept()).start();
         }
     }
 
     public void close() throws IOException {
-        in.close();
-        out.close();
-        clientSocket.close();
         serverSocket.close();
     }
 }
