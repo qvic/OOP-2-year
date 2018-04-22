@@ -4,9 +4,11 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.text.Text;
 import socket.EchoClient;
+import socket.JsonMessage;
 
 import java.io.IOException;
 import java.net.URL;
@@ -17,17 +19,17 @@ public class MainController implements Initializable {
     private EchoClient echoClient;
 
     @FXML
-    private Text textLabel;
+    private TextArea editorArea;
 
     @FXML
-    private TextField inputText;
+    private TextArea debugArea;
 
     @FXML
     private Button sendButton;
 
     private void onSendAction(ActionEvent actionEvent) {
         try {
-            textLabel.setText("Got: " + echoClient.sendAndGet(inputText.getText()));
+            echoClient.sendAndGet(new JsonMessage(editorArea.getText()));
         } catch (IOException e) {
             e.printStackTrace();
         }
