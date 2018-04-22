@@ -1,0 +1,21 @@
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Text?>
+<GridPane
+          xmlns:fx="http://javafx.com/fxml" alignment="center" hgap="10" vgap="10">
+
+    <Text fx:id="textLabel"
+          text="Got: "
+          style="-fx-font-size: 20px"
+          GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="2"/>
+
+    <TextField fx:id="inputText"
+               style="-fx-font-size: 20px"
+               GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+
+    <Button fx:id="sendButton"
+            text="Send"
+            style="-fx-font-size: 20px"
+            GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+</GridPane>
