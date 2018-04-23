@@ -1,14 +1,12 @@
-package ui;
+package controllers;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
-import javafx.scene.text.Text;
 import socket.EchoClient;
-import socket.JsonMessage;
+import models.Message;
 
 import java.io.IOException;
 import java.net.URL;
@@ -29,7 +27,10 @@ public class MainController implements Initializable {
 
     private void onSendAction(ActionEvent actionEvent) {
         try {
-            echoClient.sendAndGet(new JsonMessage(editorArea.getText()));
+            Message request = new Message(editorArea.getText());
+            Message response = echoClient.sendAndGet(request);
+
+            debugArea.setText(response.getText());
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -1,6 +1,7 @@
 package socket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import models.Message;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,12 +20,12 @@ public class EchoClient {
         in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
     }
 
-    public JsonMessage sendAndGet(JsonMessage message) throws IOException {
+    public Message sendAndGet(Message message) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
 
         out.println(mapper.writeValueAsString(message));
 
-        return mapper.readValue(in.readLine(), JsonMessage.class);
+        return mapper.readValue(in.readLine(), Message.class);
     }
 
     public void close() throws IOException {
