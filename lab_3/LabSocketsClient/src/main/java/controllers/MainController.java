@@ -11,6 +11,7 @@ import models.Message;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.function.Consumer;
 
 public class MainController implements Initializable {
 
@@ -26,20 +27,15 @@ public class MainController implements Initializable {
     private Button sendButton;
 
     private void onSendAction(ActionEvent actionEvent) {
-        try {
-            Message request = new Message(editorArea.getText());
-            Message response = echoClient.sendAndGet(request);
-
-            debugArea.setText(response.getText());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Message request = new Message(editorArea.getText());
+        echoClient.send(request);
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         try {
-            echoClient = new EchoClient("localhost", 8080);
+            echoClient = new EchoClient("localhost", 8080,
+                    message -> debugArea.setText(message.getText()));
         } catch (IOException e) {
             System.out.println("Connection refused");
         }

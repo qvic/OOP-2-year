@@ -32,10 +32,12 @@ public class EchoServer {
 
         Thread messageHandling = new Thread(() -> {
             while (true) {
-                Message message;
                 try {
-                    message = messages.take();
+                    Message message = messages.take();
                     broadcastMessage(message);
+//                    broadcastMessage(new Message("Poshli nahuy"));
+
+                    System.out.println("Message Received: " + message);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

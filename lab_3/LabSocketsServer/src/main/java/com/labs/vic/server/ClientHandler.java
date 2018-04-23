@@ -29,8 +29,6 @@ class ClientHandler {
                     String requestString = in.readLine();
                     if (requestString != null) {
                         Message request = EchoServer.jsonObjectMapper.readValue(requestString, Message.class);
-                        System.out.println("Got (port " + socket.getPort() + "): " + request.toString());
-
                         messages.put(request);
                     }
                 }
