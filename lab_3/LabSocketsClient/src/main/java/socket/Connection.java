@@ -1,7 +1,7 @@
-package com.labs.vic.server;
+package socket;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.labs.vic.models.Message;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import models.Message;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -10,11 +10,15 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.concurrent.LinkedBlockingQueue;
 
-class ClientHandler {
-    private PrintWriter out;
-    private BufferedReader in;
+public class Connection {
 
-    ClientHandler(Socket socket, LinkedBlockingQueue<Message> messages) throws IOException {
+    private static final ObjectMapper jsonObjectMapper = new ObjectMapper();
+    private BufferedReader in;
+    private PrintWriter out;
+    private LinkedBlockingQueue<Message> messages;
+
+    Connection(Socket socket, LinkedBlockingQueue<Message> messages) throws IOException {
+        this.messages = messages;
         this.out = new PrintWriter(socket.getOutputStream(), true);
         this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
@@ -23,7 +27,7 @@ class ClientHandler {
                 while (true) {
                     String requestString = in.readLine();
                     if (requestString != null) {
-                        Message request = EchoServer.jsonObjectMapper.readValue(requestString, Message.class);
+                        Message request = jsonObjectMapper.readValue(requestString, Message.class);
                         messages.put(request);
                     }
                 }
@@ -43,10 +47,10 @@ class ClientHandler {
         reader.start();
     }
 
-    public void sendMessage(Message message) {
+    protected void sendMessage(Message message) {
         try {
-            out.println(EchoServer.jsonObjectMapper.writeValueAsString(message));
-        } catch (JsonProcessingException e) {
+            out.println(jsonObjectMapper.writeValueAsString(message));
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
