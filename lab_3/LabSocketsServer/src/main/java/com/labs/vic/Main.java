@@ -1,5 +1,7 @@
 package com.labs.vic;
 
+import com.labs.vic.server.EchoServer;
+
 import java.io.IOException;
 
 public class Main {
