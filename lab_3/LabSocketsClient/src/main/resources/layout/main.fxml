@@ -9,8 +9,6 @@
 
     <TextArea fx:id="editorArea" style="-fx-font-size: 18px;" wrapText="true" GridPane.columnIndex="0"
               GridPane.rowIndex="1"/>
-    <TextArea fx:id="debugArea" editable="false" style="-fx-font-size: 18px;" wrapText="true" GridPane.columnIndex="1"
-              GridPane.rowIndex="1"/>
 
     <Button fx:id="sendButton" style="-fx-font-size: 20px" text="Send" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
 
