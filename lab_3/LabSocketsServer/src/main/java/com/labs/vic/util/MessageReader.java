@@ -1,6 +1,7 @@
 package com.labs.vic.util;
 
 import com.labs.vic.models.Message;
+import com.labs.vic.models.Messages;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -24,7 +25,7 @@ public class MessageReader implements Runnable {
                 String requestJson = in.readLine();
                 if (requestJson != null) {
                     Message request = Objects.requireNonNull(
-                            Messages.jsonToMessage(requestJson),
+                            Messages.toMessage(requestJson),
                             "Cannot process given JSON: " + requestJson
                     );
                     messages.put(request);

@@ -7,9 +7,11 @@ import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import models.Message;
 import socket.SocketClient;
+import util.Messages;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Date;
 import java.util.ResourceBundle;
 
 public class MainController implements Initializable {
@@ -23,7 +25,7 @@ public class MainController implements Initializable {
     private Button sendButton;
 
     private void onSendAction(ActionEvent actionEvent) {
-        Message request = new Message(editorArea.getText());
+        Message request = new Message(Messages.Type.TEXT, editorArea.getText(), socketClient.getAddress(), new Date());
         socketClient.send(request);
     }
 
@@ -31,7 +33,7 @@ public class MainController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         try {
             socketClient = new SocketClient("localhost", 8080,
-                    message -> editorArea.setText(message.getText()));
+                    message -> editorArea.setText(message.getBody()));
 
         } catch (IOException e) {
             System.out.println("Connection refused");

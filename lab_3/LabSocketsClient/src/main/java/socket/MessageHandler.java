@@ -1,4 +1,4 @@
-package util;
+package socket;
 
 import models.Message;
 

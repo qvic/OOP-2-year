@@ -1,7 +1,7 @@
 package com.labs.vic.server;
 
 import com.labs.vic.models.Message;
-import com.labs.vic.util.Messages;
+import com.labs.vic.models.Messages;
 import com.labs.vic.util.MessageReader;
 
 import java.io.BufferedReader;
@@ -28,7 +28,7 @@ class ClientHandler {
 
     public void sendMessage(Message message) {
         out.println(
-                Messages.messageToJson(Objects.requireNonNull(message, "Cannot send 'null' message"))
+                Messages.toJson(Objects.requireNonNull(message, "Cannot send 'null' message"))
         );
     }
 }

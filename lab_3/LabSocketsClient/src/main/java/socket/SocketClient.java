@@ -1,8 +1,6 @@
 package socket;
 
 import models.Message;
-import util.MessageHandler;
-import util.MessageReader;
 import util.Messages;
 
 import java.io.BufferedReader;
@@ -18,9 +16,10 @@ public class SocketClient {
 
     private PrintWriter out;
     private BufferedReader in;
+    private Socket socket;
 
     public SocketClient(String ip, int port, Consumer<Message> onMessage) throws IOException {
-        Socket socket = new Socket(ip, port);
+        this.socket = new Socket(ip, port);
         this.out = new PrintWriter(socket.getOutputStream(), true);
         this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         LinkedBlockingQueue<Message> messages = new LinkedBlockingQueue<>();
@@ -39,5 +38,9 @@ public class SocketClient {
         out.println(
                 Messages.messageToJson(Objects.requireNonNull(message, "Cannot send 'null' message"))
         );
+    }
+
+    public String getAddress() {
+        return socket.getLocalSocketAddress().toString();
     }
 }

@@ -1,6 +1,7 @@
-package util;
+package socket;
 
 import models.Message;
+import util.Messages;
 
 import java.io.BufferedReader;
 import java.io.IOException;

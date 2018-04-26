@@ -7,6 +7,10 @@ import models.Message;
 import java.io.IOException;
 
 public class Messages {
+    public enum Type {
+        COMMAND, TEXT
+    }
+
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public static Message jsonToMessage(String json) {
