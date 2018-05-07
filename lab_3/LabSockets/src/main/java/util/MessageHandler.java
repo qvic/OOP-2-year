@@ -1,5 +1,6 @@
 package util;
 
+import javafx.application.Platform;
 import models.Message;
 
 import java.util.concurrent.LinkedBlockingQueue;
@@ -19,8 +20,8 @@ public class MessageHandler implements Runnable {
     public void run() {
         while (true) {
             try {
-                Message message = messages.take();
-                onMessage.accept(message);
+                final Message message = messages.take();
+                Platform.runLater(() -> onMessage.accept(message));
                 System.out.println("Message Received: " + message);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

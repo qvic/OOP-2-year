@@ -5,10 +5,10 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
-import javafx.scene.control.TextArea;
 import javafx.stage.FileChooser;
 import models.Message;
 import models.Messages;
+import org.fxmisc.richtext.InlineCssTextArea;
 
 import java.io.*;
 import java.net.URL;
@@ -21,7 +21,7 @@ public class MainController implements Initializable {
     private boolean ignoreUpdate = false;
 
     @FXML
-    private TextArea editorArea;
+    private InlineCssTextArea editorArea;
 
     @FXML
     private Button loadButton;
@@ -29,12 +29,12 @@ public class MainController implements Initializable {
     private void onLoadAction(ActionEvent actionEvent) {
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Open");
-//        chooser.setInitialDirectory(
-//                new File(System.getProperty("/home/vic"))
-//        );
-//        chooser.getExtensionFilters().add(
-//                new FileChooser.ExtensionFilter("Text files", "*.txt")
-//        );
+        chooser.setInitialDirectory(
+                new File(System.getProperty("user.home"))
+        );
+        chooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Text files", "*.txt")
+        );
         File file = chooser.showOpenDialog(loadButton.getScene().getWindow());
         if (file == null) return;
 
@@ -50,7 +50,7 @@ public class MainController implements Initializable {
                 line = reader.readLine();
             }
 
-            editorArea.setText(builder.toString());
+            editorArea.replaceText(builder.toString());
         } catch (FileNotFoundException e) {
             System.out.println("File not found");
         } catch (IOException e) {
@@ -66,8 +66,8 @@ public class MainController implements Initializable {
             socketClient = new SocketClient("localhost", 8080,
                     message -> {
                         ignoreUpdate = true;
-                        editorArea.setText(message.getBody());
-                        editorArea.positionCaret(message.getBody().length());
+                        editorArea.replaceText(message.getBody());
+                        editorArea.displaceCaret(message.getBody().length());
                         ignoreUpdate = false;
                     });
 
