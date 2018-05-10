@@ -9,14 +9,16 @@ import java.io.IOException;
 
 public class Main extends Application {
 
+    private static final int WIDTH = 500;
+    private static final int HEIGHT = 300;
     private static final String RUN_SERVER = "server";
 
     public static void main(String[] args) {
-        if (args.length == 1 && args[0].equals(RUN_SERVER)) {
+        if (args.length >= 1 && args[0].equals(RUN_SERVER)) {
             try {
                 System.out.println("Running server...");
                 SocketServer socketServer = new SocketServer(8080);
-                socketServer.listen();
+                socketServer.startListening();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -32,7 +34,7 @@ public class Main extends Application {
         loader.setController(new ui.MainController());
         Parent root = loader.load();
 
-        Scene scene = new Scene(root, 500, 300);
+        Scene scene = new Scene(root, WIDTH, HEIGHT);
 
         primaryStage.setTitle("Echo");
         primaryStage.setScene(scene);

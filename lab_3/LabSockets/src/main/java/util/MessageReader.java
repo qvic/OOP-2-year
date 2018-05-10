@@ -31,8 +31,7 @@ public class MessageReader implements Runnable {
                     messages.put(request);
                 }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException ignored) {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }

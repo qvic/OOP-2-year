@@ -21,7 +21,7 @@ public class MessageHandler implements Runnable {
         while (true) {
             try {
                 final Message message = messages.take();
-                Platform.runLater(() -> onMessage.accept(message));
+                onMessage.accept(message);
                 System.out.println("Message Received: " + message);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

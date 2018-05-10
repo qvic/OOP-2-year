@@ -1,6 +1,5 @@
 package models;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import java.util.Date;
@@ -21,11 +20,6 @@ class Message {
     }
 
     public Message() {
-    }
-
-    @JsonIgnore
-    public boolean isCommand() {
-        return type.equals(Messages.Type.COMMAND);
     }
 }
 

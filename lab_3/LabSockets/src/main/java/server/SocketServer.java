@@ -14,10 +14,16 @@ public class SocketServer {
     private ArrayList<ClientHandler> clients;
     private LinkedBlockingQueue<Message> messages;
 
-    public void listen() throws IOException {
-        while (true) {
-            clients.add(new ClientHandler(serverSocket.accept(), messages));
-        }
+    public void startListening() {
+        Thread listener = new Thread(() -> {
+            while (true) {
+                try {
+                    clients.add(new ClientHandler(serverSocket.accept(), messages));
+                } catch (IOException ignored) {
+                }
+            }
+        });
+        listener.start();
     }
 
     public void close() throws IOException {
@@ -29,15 +35,16 @@ public class SocketServer {
         clients = new ArrayList<>();
         messages = new LinkedBlockingQueue<>();
 
-        Thread messageHandling = new Thread(new MessageHandler(messages, this::broadcastMessage));
+        Thread messageHandling = new Thread(new MessageHandler(messages, this::onMessage));
 
         messageHandling.setDaemon(true);
         messageHandling.start();
     }
 
-    private void broadcastMessage(Message message) {
+    private void onMessage(Message message) {
         for (ClientHandler client : clients) {
             client.sendMessage(message);
+            // say everyone about cursor positions
         }
     }
 }

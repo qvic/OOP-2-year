@@ -14,11 +14,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 class ClientHandler {
     private PrintWriter out;
-    private BufferedReader in;
+    private int currentCursor;
 
     ClientHandler(Socket socket, LinkedBlockingQueue<Message> messages) throws IOException {
         this.out = new PrintWriter(socket.getOutputStream(), true);
-        this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         System.out.println("Connected " + socket.getRemoteSocketAddress());
 
         Thread reader = new Thread(new MessageReader(in, messages));
@@ -30,5 +30,13 @@ class ClientHandler {
         out.println(
                 Messages.toJson(Objects.requireNonNull(message, "Cannot send 'null' message"))
         );
+    }
+
+    public int getCursor() {
+        return currentCursor;
+    }
+
+    public void setCursor(int currentCursor) {
+        this.currentCursor = currentCursor;
     }
 }

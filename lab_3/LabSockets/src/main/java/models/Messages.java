@@ -7,7 +7,7 @@ import java.io.IOException;
 
 public class Messages {
     public enum Type {
-        COMMAND, TEXT
+        CURSOR, TEXT
     }
 
     private static final ObjectMapper objectMapper = new ObjectMapper();

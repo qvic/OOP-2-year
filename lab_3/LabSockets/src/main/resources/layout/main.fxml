@@ -9,9 +9,10 @@
           xmlns:fx="http://javafx.com/fxml/1">
 
     <InlineCssTextArea fx:id="editorArea" style="-fx-font-size: 18px;" wrapText="true" GridPane.columnIndex="0"
-              GridPane.rowIndex="1" prefWidth="500" prefHeight="250" GridPane.fillWidth="true"/>
+              GridPane.rowIndex="1" GridPane.columnSpan="2" prefWidth="500" prefHeight="250" GridPane.fillWidth="true"/>
 
-    <Button fx:id="loadButton" style="-fx-font-size: 20px" text="Load" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+    <Button fx:id="loadButton" style="-fx-font-size: 18px" text="Load" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+    <Button fx:id="saveButton" style="-fx-font-size: 18px" text="Save" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
 
     <padding>
         <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>

@@ -42,6 +42,12 @@ public class SocketClient {
         );
     }
 
+    public void close() throws IOException {
+        out.close();
+        in.close();
+        socket.close();
+    }
+
     public String getAddress() {
         return socket.getLocalSocketAddress().toString();
     }
