@@ -1,6 +1,7 @@
 package server;
 
 import client.SocketClient;
+import external.diff_match_patch;
 import models.Message;
 import models.Messages;
 import org.junit.After;
@@ -8,9 +9,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Date;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class SocketServerTest {
     private static final int TEST_PORT = 7777;
@@ -21,13 +21,15 @@ public class SocketServerTest {
     private SocketClient socketClient2;
     private SocketClient socketClient3;
     private final Message testMessage;
+    private diff_match_patch dmp;
 
     public SocketServerTest() {
-        testMessage = new Message(Messages.Type.TEXT, "TestBody", "TestAuthor", new Date(0));
+        testMessage = new Message(dmp.patch_make("qwty", "qwerty"), "TestAuthor", 0);
     }
 
     @Before
     public void setUp() throws Exception {
+        dmp = new diff_match_patch();
         socketServer = new SocketServer(TEST_PORT);
         socketServer.startListening();
     }

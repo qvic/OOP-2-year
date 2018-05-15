@@ -1,6 +1,7 @@
 package ui;
 
 import client.SocketClient;
+import external.diff_match_patch;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -8,18 +9,19 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.stage.FileChooser;
 import models.Message;
-import models.Messages;
 import org.fxmisc.richtext.InlineCssTextArea;
 
 import java.io.*;
 import java.net.URL;
-import java.util.Date;
+import java.util.LinkedList;
 import java.util.ResourceBundle;
 
 public class MainController implements Initializable {
 
     private SocketClient socketClient;
     private boolean ignoreUpdate = false;
+    private diff_match_patch dmp;
+    private int stateId = 0;
 
     @FXML
     private InlineCssTextArea editorArea;
@@ -45,16 +47,22 @@ public class MainController implements Initializable {
         try (FileReader fileReader = new FileReader(file);
              BufferedReader reader = new BufferedReader(fileReader)) {
 
-            StringBuilder builder = new StringBuilder();
+            StringBuilder stringBuilder = new StringBuilder();
             String line = reader.readLine();
 
             while (line != null) {
-                builder.append(line);
-                builder.append(System.lineSeparator());
+                stringBuilder.append(line);
+                stringBuilder.append(System.lineSeparator());
                 line = reader.readLine();
             }
 
-            editorArea.replaceText(builder.toString());
+            String result = stringBuilder.toString();
+
+            Message message = new Message(dmp.patch_make(editorArea.getText(), result),
+                    socketClient.getAddress(), stateId);
+
+            socketClient.send(message);
+
         } catch (FileNotFoundException e) {
             System.out.println("File not found");
         } catch (IOException e) {
@@ -82,28 +90,41 @@ public class MainController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        dmp = new diff_match_patch();
+
         loadButton.setOnAction(this::onLoadAction);
         saveButton.setOnAction(this::onSaveAction);
 
         try {
             socketClient = new SocketClient("localhost", 8080,
                     message -> Platform.runLater(() -> {
-                        ignoreUpdate = true;
-                        editorArea.replaceText(message.getBody());
-                        editorArea.displaceCaret(message.getBody().length());
-                        ignoreUpdate = false;
+                        // TODO adapter for diff_match_patch
+                        Object[] result = dmp.patch_apply(message.getPatches(), editorArea.getText());
+                        System.out.println(result[1]);
+
+                        replaceText((String) result[0]);
+
+                        stateId = message.getStateId();
                     }));
 
         } catch (IOException e) {
-            System.out.println("Connection refused");
-            return;
+            throw new NullPointerException("Connection refused");
         }
 
         editorArea.textProperty().addListener((observable, oldValue, newValue) -> {
             if (!ignoreUpdate) {
-                Message request = new Message(Messages.Type.TEXT, newValue, socketClient.getAddress(), new Date());
-                socketClient.send(request);
+                LinkedList<diff_match_patch.Patch> patches = dmp.patch_make(oldValue, newValue);
+                Message message = new Message(patches, socketClient.getAddress(), stateId);
+                socketClient.send(message);
+
+                replaceText(oldValue);
             }
         });
+    }
+
+    private void replaceText(String text) {
+        ignoreUpdate = true;
+        editorArea.replaceText(text);
+        ignoreUpdate = false;
     }
 }

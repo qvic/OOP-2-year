@@ -28,6 +28,7 @@ public class MessageReader implements Runnable {
                             Messages.toMessage(requestJson),
                             "Cannot process given JSON: " + requestJson
                     );
+//                    Thread.sleep(1000); // fake ping
                     messages.put(request);
                 }
             }

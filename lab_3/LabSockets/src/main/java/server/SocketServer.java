@@ -14,6 +14,8 @@ public class SocketServer {
     private ArrayList<ClientHandler> clients;
     private LinkedBlockingQueue<Message> messages;
 
+    private States states;
+
     public void startListening() {
         Thread listener = new Thread(() -> {
             while (true) {
@@ -34,6 +36,7 @@ public class SocketServer {
         serverSocket = new ServerSocket(port);
         clients = new ArrayList<>();
         messages = new LinkedBlockingQueue<>();
+        states = new States();
 
         Thread messageHandling = new Thread(new MessageHandler(messages, this::onMessage));
 
@@ -42,9 +45,11 @@ public class SocketServer {
     }
 
     private void onMessage(Message message) {
+        states.append(message);
+
         for (ClientHandler client : clients) {
-            client.sendMessage(message);
-            // say everyone about cursor positions
+            client.sendMessage(states.getLast());
+//            TODO: say everyone about cursor positions
         }
     }
 }
