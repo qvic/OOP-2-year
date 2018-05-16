@@ -7,12 +7,18 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
+import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
+import models.CursorChange;
 import models.Message;
+import models.Messages;
+import org.fxmisc.richtext.CaretNode;
 import org.fxmisc.richtext.InlineCssTextArea;
+import org.reactfx.SuspendableNo;
 
 import java.io.*;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.ResourceBundle;
 
@@ -20,8 +26,11 @@ public class MainController implements Initializable {
 
     private SocketClient socketClient;
     private boolean ignoreUpdate = false;
-    private diff_match_patch dmp;
     private int stateId = 0;
+    private String oldEditorValue = "";
+    private int oldCaretPosition = 0;
+    private diff_match_patch dmp;
+    private HashMap<String, CaretNode> carets;
 
     @FXML
     private InlineCssTextArea editorArea;
@@ -61,7 +70,7 @@ public class MainController implements Initializable {
             Message message = new Message(dmp.patch_make(editorArea.getText(), result),
                     socketClient.getAddress(), stateId);
 
-            socketClient.send(message);
+            socketClient.send("text", message);
 
         } catch (FileNotFoundException e) {
             System.out.println("File not found");
@@ -91,40 +100,78 @@ public class MainController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         dmp = new diff_match_patch();
+        carets = new HashMap<>();
+        editorArea.setWrapText(true);
 
         loadButton.setOnAction(this::onLoadAction);
         saveButton.setOnAction(this::onSaveAction);
 
         try {
             socketClient = new SocketClient("localhost", 8080,
-                    message -> Platform.runLater(() -> {
-                        // TODO adapter for diff_match_patch
-                        Object[] result = dmp.patch_apply(message.getPatches(), editorArea.getText());
-                        System.out.println(result[1]);
+                    request -> Platform.runLater(() -> {
+                        String type = request.get("type").asText();
+                        if (type.equals("text")) {
+                            // TODO proxy for diff_match_patch
+                            Message message = Messages.toMessage(request.get("body"));
+                            if (message == null) return;
 
-                        replaceText((String) result[0]);
+                            Object[] result = dmp.patch_apply(message.getPatches(), editorArea.getText());
 
-                        stateId = message.getStateId();
+                            replaceText((String) result[0]);
+
+                            stateId = message.getStateId();
+                        } else if (type.equals("cursor")) {
+                            CursorChange message = Messages.toCursorChange(request.get("body"));
+                            if (message == null) return;
+
+                            if (!carets.containsKey(message.getAuthor()) && message.getPosition() <= editorArea.getLength()) {
+                                CaretNode caret = new CaretNode(message.getAuthor(), editorArea,
+                                        new SuspendableNo(), 0);
+
+                                if (!editorArea.addCaret(caret)) {
+                                    throw new IllegalStateException("caret was not added to area");
+                                }
+                                caret.moveTo(message.getPosition());
+
+                                caret.setStroke(Color.RED);
+
+                                carets.put(message.getAuthor(), caret);
+                            } else if (message.getPosition() <= editorArea.getLength()) {
+                                carets.get(message.getAuthor()).moveTo(message.getPosition());
+                            }
+                        }
+
                     }));
 
         } catch (IOException e) {
             throw new NullPointerException("Connection refused");
         }
 
+        editorArea.caretPositionProperty().addListener((observable, oldValue, newValue) -> {
+            System.out.println("Changed caret to " + newValue);
+            if (!ignoreUpdate) {
+                CursorChange cursorChange = new CursorChange(newValue, socketClient.getAddress());
+                socketClient.send("cursor", cursorChange);
+            }
+        });
+
         editorArea.textProperty().addListener((observable, oldValue, newValue) -> {
             if (!ignoreUpdate) {
                 LinkedList<diff_match_patch.Patch> patches = dmp.patch_make(oldValue, newValue);
                 Message message = new Message(patches, socketClient.getAddress(), stateId);
-                socketClient.send(message);
-
-                replaceText(oldValue);
+//                oldEditorValue = oldValue;
+                socketClient.send("text", message);
             }
         });
     }
 
     private void replaceText(String text) {
         ignoreUpdate = true;
+        int caretPosition = editorArea.caretPositionProperty().getValue();
         editorArea.replaceText(text);
+        if (caretPosition <= editorArea.getLength()) {
+            editorArea.displaceCaret(caretPosition);
+        }
         ignoreUpdate = false;
     }
 }

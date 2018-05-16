@@ -1,5 +1,6 @@
 package util;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import models.Message;
 import models.Messages;
 
@@ -11,9 +12,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class MessageReader implements Runnable {
 
     private BufferedReader in;
-    private LinkedBlockingQueue<Message> messages;
+    private LinkedBlockingQueue<JsonNode> messages;
 
-    public MessageReader(BufferedReader in, LinkedBlockingQueue<Message> messages) {
+    public MessageReader(BufferedReader in, LinkedBlockingQueue<JsonNode> messages) {
         this.in = in;
         this.messages = messages;
     }
@@ -24,11 +25,12 @@ public class MessageReader implements Runnable {
             while (true) {
                 String requestJson = in.readLine();
                 if (requestJson != null) {
-                    Message request = Objects.requireNonNull(
-                            Messages.toMessage(requestJson),
+                    JsonNode request = Objects.requireNonNull(
+                            Messages.toJsonNode(requestJson),
                             "Cannot process given JSON: " + requestJson
                     );
 //                    Thread.sleep(1000); // fake ping
+                    System.out.println("Message Received: " + request);
                     messages.put(request);
                 }
             }

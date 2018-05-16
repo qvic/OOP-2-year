@@ -1,5 +1,6 @@
 package util;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import models.Message;
 
 import java.util.concurrent.LinkedBlockingQueue;
@@ -7,10 +8,10 @@ import java.util.function.Consumer;
 
 public class MessageHandler implements Runnable {
 
-    private LinkedBlockingQueue<Message> messages;
-    private Consumer<Message> onMessage;
+    private LinkedBlockingQueue<JsonNode> messages;
+    private Consumer<JsonNode> onMessage;
 
-    public MessageHandler(LinkedBlockingQueue<Message> messages, Consumer<Message> onMessage) {
+    public MessageHandler(LinkedBlockingQueue<JsonNode> messages, Consumer<JsonNode> onMessage) {
         this.messages = messages;
         this.onMessage = onMessage;
     }
@@ -19,9 +20,8 @@ public class MessageHandler implements Runnable {
     public void run() {
         while (true) {
             try {
-                Message message = messages.take();
+                JsonNode message = messages.take();
                 onMessage.accept(message);
-                System.out.println("Message Received: " + message);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }

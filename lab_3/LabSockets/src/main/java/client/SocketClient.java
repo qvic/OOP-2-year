@@ -1,5 +1,8 @@
 package client;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.JsonNode;
+import models.CursorChange;
 import models.Message;
 import models.Messages;
 import util.MessageHandler;
@@ -20,11 +23,11 @@ public class SocketClient {
     private BufferedReader in;
     private Socket socket;
 
-    public SocketClient(String ip, int port, Consumer<Message> onMessage) throws IOException {
+    public SocketClient(String ip, int port, Consumer<JsonNode> onMessage) throws IOException {
         this.socket = new Socket(ip, port);
         this.out = new PrintWriter(socket.getOutputStream(), true);
         this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        LinkedBlockingQueue<Message> messages = new LinkedBlockingQueue<>();
+        LinkedBlockingQueue<JsonNode> messages = new LinkedBlockingQueue<>();
 
         Thread messageHandler = new Thread(new MessageHandler(messages, onMessage));
         Thread messageReader = new Thread(new MessageReader(in, messages));
@@ -36,10 +39,8 @@ public class SocketClient {
         messageReader.start();
     }
 
-    public void send(Message message) {
-        out.println(
-                Messages.toJson(Objects.requireNonNull(message, "Cannot send 'null' message"))
-        );
+    public void send(String text, Object message) {
+        out.println(Objects.requireNonNull(Messages.toJson(text, message), "Cannot send 'null'"));
     }
 
     public void close() throws IOException {

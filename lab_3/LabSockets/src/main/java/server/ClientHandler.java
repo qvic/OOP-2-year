@@ -1,5 +1,7 @@
 package server;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import models.CursorChange;
 import models.Message;
 import models.Messages;
 import util.MessageReader;
@@ -17,7 +19,7 @@ class ClientHandler {
     private Socket socket;
     private int currentCursor;
 
-    ClientHandler(Socket socket, LinkedBlockingQueue<Message> messages) throws IOException {
+    ClientHandler(Socket socket, LinkedBlockingQueue<JsonNode> messages) throws IOException {
         this.out = new PrintWriter(socket.getOutputStream(), true);
         BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         System.out.println("Connected " + socket.getRemoteSocketAddress());
@@ -34,7 +36,13 @@ class ClientHandler {
 
     public void sendMessage(Message message) {
         out.println(
-                Messages.toJson(Objects.requireNonNull(message, "Cannot send 'null' message"))
+                Objects.requireNonNull(Messages.toJson("text", message), "Cannot send 'null' message")
+        );
+    }
+
+    public void sendMessage(CursorChange message) {
+        out.println(
+                Objects.requireNonNull(Messages.toJson("cursor", message), "Cannot send 'null' message")
         );
     }
 

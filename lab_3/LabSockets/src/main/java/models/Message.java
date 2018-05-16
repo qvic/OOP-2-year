@@ -23,4 +23,3 @@ class Message {
     public Message() {
     }
 }
-

@@ -20,28 +20,37 @@ public class MessagesTest {
 
     @Test
     public void toMessage() {
-        String json = "{\"patches\":[{\"diffs\":[{\"operation\":\"EQUAL\",\"text\":\"i \"},{\"operation\":\"DELETE\",\"text\":\"don'\"},{\"operation\":\"INSERT\",\"text\":\"jus\"},{\"operation\":\"EQUAL\",\"text\":\"t kn\"}],\"start1\":0,\"start2\":0,\"length1\":10,\"length2\":9}],\"author\":\"TestAuthor\",\"date\":4321,\"stateId\":1234}";
+        String json = "{\"patches\":[{\"diffs\":[{\"operation\":\"EQUAL\",\"text\":\"sum \"},{\"operation\":\"DELETE\",\"text\":\"dolor\"},{\"operation\":\"INSERT\",\"text\":\"sequi\"},{\"operation\":\"EQUAL\",\"text\":\" sit\"}],\"start1\":8,\"start2\":8,\"length1\":13,\"length2\":13}],\"author\":\"TestAuthor\",\"date\":4321,\"stateId\":1234}";
 
-        LinkedList<diff_match_patch.Diff> diffs = dmp.diff_main("i don't know", "i just know", true);
-        dmp.diff_cleanupSemantic(diffs);
-        LinkedList<diff_match_patch.Patch> patches = dmp.patch_make("i don't know", diffs);
-        Message message = new Message(patches, "TestAuthor", 1234);
-        message.setDate(new Date(4321));
+        String text1 = "lorem ipsum dolor sit ame";
+        String text2 = "lorem ipsum sequi sit ame";
 
-        assertEquals(message, Messages.toMessage(json));
+        LinkedList<diff_match_patch.Diff> diffs = dmp.diff_main(text1, text2);
+        dmp.diff_cleanupEfficiency(diffs);
+        LinkedList<diff_match_patch.Patch> patches = dmp.patch_make(text1, diffs);
+        Message expected = new Message(patches, "TestAuthor", 1234);
+        expected.setDate(new Date(4321));
+
+        assertEquals(expected, Messages.toMessage(Messages.toJsonNode(json)));
     }
 
     @Test
     public void toJson() {
-        LinkedList<diff_match_patch.Diff> diffs = dmp.diff_main("i don't know", "i just know", true);
-        dmp.diff_cleanupSemantic(diffs);
-        LinkedList<diff_match_patch.Patch> patches = dmp.patch_make("i don't know", diffs);
+        String text1 = "lorem ipsum dolor sit amet";
+        String text2 = "lorem ipsum sequi sit amet";
+
+        LinkedList<diff_match_patch.Diff> diffs = dmp.diff_main(text1, text2);
+        dmp.diff_cleanupEfficiency(diffs);
+        LinkedList<diff_match_patch.Patch> patches = dmp.patch_make(text1, diffs);
         Message message = new Message(patches, "TestAuthor", 1234);
         message.setDate(new Date(4321));
 
-        assertEquals("i just know", dmp.patch_apply(patches,"i don't know")[0]);
 
-        String expected = "{\"patches\":[{\"diffs\":[{\"operation\":\"EQUAL\",\"text\":\"i \"},{\"operation\":\"DELETE\",\"text\":\"don'\"},{\"operation\":\"INSERT\",\"text\":\"jus\"},{\"operation\":\"EQUAL\",\"text\":\"t kn\"}],\"start1\":0,\"start2\":0,\"length1\":10,\"length2\":9}],\"author\":\"TestAuthor\",\"date\":4321,\"stateId\":1234}";
-        assertEquals(expected, Messages.toJson(message));
+        String text11 = "lorem dolor sit amet, consectetur adipisicing elit";
+        String text22 = "lorem sequi sit amet, consectetur adipisicing elit";
+        assertEquals(text22, dmp.patch_apply(patches, text11)[0]);
+
+        String expected = "{\"patches\":[{\"diffs\":[{\"operation\":\"EQUAL\",\"text\":\"sum \"},{\"operation\":\"DELETE\",\"text\":\"dolor\"},{\"operation\":\"INSERT\",\"text\":\"sequi\"},{\"operation\":\"EQUAL\",\"text\":\" sit\"}],\"start1\":8,\"start2\":8,\"length1\":13,\"length2\":13}],\"author\":\"TestAuthor\",\"date\":4321,\"stateId\":1234}";
+        assertEquals(expected, Messages.toJson("text", message));
     }
 }
