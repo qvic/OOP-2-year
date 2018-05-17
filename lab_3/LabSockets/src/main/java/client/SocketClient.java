@@ -39,8 +39,8 @@ public class SocketClient {
         messageReader.start();
     }
 
-    public void send(String text, Object message) {
-        out.println(Objects.requireNonNull(Messages.toJson(text, message), "Cannot send 'null'"));
+    public void send(Messages.Type type, Object message) {
+        out.println(Objects.requireNonNull(Messages.toJson(type, message), "Cannot send 'null'"));
     }
 
     public void close() throws IOException {

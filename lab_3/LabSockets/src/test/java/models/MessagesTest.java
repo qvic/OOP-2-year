@@ -51,6 +51,6 @@ public class MessagesTest {
         assertEquals(text22, dmp.patch_apply(patches, text11)[0]);
 
         String expected = "{\"patches\":[{\"diffs\":[{\"operation\":\"EQUAL\",\"text\":\"sum \"},{\"operation\":\"DELETE\",\"text\":\"dolor\"},{\"operation\":\"INSERT\",\"text\":\"sequi\"},{\"operation\":\"EQUAL\",\"text\":\" sit\"}],\"start1\":8,\"start2\":8,\"length1\":13,\"length2\":13}],\"author\":\"TestAuthor\",\"date\":4321,\"stateId\":1234}";
-        assertEquals(expected, Messages.toJson("text", message));
+        assertEquals(expected, Messages.toJson(Messages.Type.TEXT, message));
     }
 }

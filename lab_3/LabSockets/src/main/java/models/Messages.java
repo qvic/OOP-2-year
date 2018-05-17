@@ -13,6 +13,14 @@ import java.io.IOException;
 
 public class Messages {
 
+    private static final String TYPE = "type";
+    private static final String BODY = "body";
+
+    public enum Type {
+        TEXT, CURSOR
+
+    }
+
     private static final ObjectMapper objectMapper = getObjectMapper();
 
     private static ObjectMapper getObjectMapper() {
@@ -36,7 +44,7 @@ public class Messages {
 
     public static Message toMessage(JsonNode node) {
         try {
-            return objectMapper.treeToValue(node, Message.class);
+            return objectMapper.treeToValue(node.get(BODY), Message.class);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -45,23 +53,27 @@ public class Messages {
 
     public static CursorChange toCursorChange(JsonNode node) {
         try {
-            return objectMapper.treeToValue(node, CursorChange.class);
+            return objectMapper.treeToValue(node.get(BODY), CursorChange.class);
         } catch (IOException e) {
             e.printStackTrace();
         }
         return null;
     }
 
-    public static String toJson(String type, Object message) {
+    public static String toJson(Type type, Object message) {
         try {
             ObjectNode node = objectMapper.createObjectNode();
-            node.put("type", type).set("body", objectMapper.valueToTree(message));
+            node.put(TYPE, type.toString()).set(BODY, objectMapper.valueToTree(message));
 
             return objectMapper.writeValueAsString(node);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public static Type getType(JsonNode node) {
+        return Type.valueOf(node.get(TYPE).asText());
     }
 }
 

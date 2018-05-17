@@ -9,7 +9,6 @@ import util.MessageHandler;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
-import java.util.Currency;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class SocketServer {
@@ -24,7 +23,8 @@ public class SocketServer {
         Thread listener = new Thread(() -> {
             while (true) {
                 try {
-                    clients.add(new ClientHandler(serverSocket.accept(), messages));
+                    ClientHandler client = new ClientHandler(serverSocket.accept(), messages);
+                    clients.add(client);
                 } catch (IOException ignored) {
                 }
             }
@@ -48,31 +48,36 @@ public class SocketServer {
         messageHandling.start();
     }
 
-    private void onMessage(JsonNode message) {
-        String type = message.get("type").asText();
-        if (type.equals("text")) {
+    private void onMessage(JsonNode node) {
+        Messages.Type type = Messages.getType(node);
 
-            states.append(Messages.toMessage(message.get("body")));
+        if (type == Messages.Type.TEXT) {
+
+            Message message = Messages.toMessage(node);
+            assert message != null;
+            states.append(message);
             broadcast(states.getLast());
 
-        } else if (type.equals("cursor")) {
+        } else if (type == Messages.Type.CURSOR) {
 
-            sendOthers(Messages.toCursorChange(message.get("body")));
+            CursorChange cursorChange = Messages.toCursorChange(node);
+            assert cursorChange != null;
+            sendOthers(cursorChange);
         }
     }
 
     private void broadcast(Message message) {
         for (ClientHandler client : clients) {
-            if (!client.getAddress().equals(message.getAuthor())) {
-                client.sendMessage(message);
-            }
+//            if (!client.getAddress().equals(message.getAuthor())) {
+                client.send(message);
+//            }
         }
     }
 
     private void sendOthers(CursorChange message) {
         for (ClientHandler client : clients) {
             if (!client.getAddress().equals(message.getAuthor())) {
-                client.sendMessage(message);
+                client.send(message);
             }
         }
     }

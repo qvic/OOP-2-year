@@ -13,6 +13,9 @@ public class States {
 
     public void append(Message message) {
         message.setStateId(textMessages.size());
+
+        // merge with another states
+
         textMessages.add(message);
     }
 

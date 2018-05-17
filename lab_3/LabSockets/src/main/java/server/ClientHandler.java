@@ -34,23 +34,17 @@ class ClientHandler {
         return socket.getRemoteSocketAddress().toString();
     }
 
-    public void sendMessage(Message message) {
+    public void send(Message message) {
         out.println(
-                Objects.requireNonNull(Messages.toJson("text", message), "Cannot send 'null' message")
+                Objects.requireNonNull(Messages.toJson(Messages.Type.TEXT, message),
+                        "Cannot send 'null' message")
         );
     }
 
-    public void sendMessage(CursorChange message) {
+    public void send(CursorChange message) {
         out.println(
-                Objects.requireNonNull(Messages.toJson("cursor", message), "Cannot send 'null' message")
+                Objects.requireNonNull(Messages.toJson(Messages.Type.CURSOR, message),
+                        "Cannot send 'null' message")
         );
-    }
-
-    public int getCursor() {
-        return currentCursor;
-    }
-
-    public void setCursor(int currentCursor) {
-        this.currentCursor = currentCursor;
     }
 }

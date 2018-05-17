@@ -15,16 +15,20 @@ public class Main extends Application {
 
     public static void main(String[] args) {
         if (args.length >= 1 && args[0].equals(RUN_SERVER)) {
-            try {
-                System.out.println("Running server...");
-                SocketServer socketServer = new SocketServer(8080);
-                socketServer.startListening();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            System.out.println("Running server...");
+            runServer();
         } else {
             System.out.println("Running client...");
             launch(args);
+        }
+    }
+
+    private static void runServer() {
+        try {
+            SocketServer socketServer = new SocketServer(8080);
+            socketServer.startListening();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

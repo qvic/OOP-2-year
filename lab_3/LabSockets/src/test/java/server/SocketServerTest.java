@@ -39,7 +39,7 @@ public class SocketServerTest {
         socketClient1 = new SocketClient("localhost", TEST_PORT, message -> {
             assertEquals(testMessage, message);
         });
-        socketClient1.send("text", testMessage);
+        socketClient1.send(Messages.Type.TEXT, testMessage);
 
         socketClient2 = new SocketClient("localhost", TEST_PORT, message -> {
             assertEquals(testMessage, message);
