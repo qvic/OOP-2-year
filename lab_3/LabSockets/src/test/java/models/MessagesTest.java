@@ -7,7 +7,7 @@ import org.junit.Test;
 import java.util.Date;
 import java.util.LinkedList;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class MessagesTest {
 
@@ -20,7 +20,7 @@ public class MessagesTest {
 
     @Test
     public void toMessage() {
-        String json = "{\"patches\":[{\"diffs\":[{\"operation\":\"EQUAL\",\"text\":\"sum \"},{\"operation\":\"DELETE\",\"text\":\"dolor\"},{\"operation\":\"INSERT\",\"text\":\"sequi\"},{\"operation\":\"EQUAL\",\"text\":\" sit\"}],\"start1\":8,\"start2\":8,\"length1\":13,\"length2\":13}],\"author\":\"TestAuthor\",\"date\":4321,\"stateId\":1234}";
+        String json = "{\"type\":\"TEXT\",\"body\":{\"patches\":[{\"diffs\":[{\"operation\":\"EQUAL\",\"text\":\"sum \"},{\"operation\":\"DELETE\",\"text\":\"dolor\"},{\"operation\":\"INSERT\",\"text\":\"sequi\"},{\"operation\":\"EQUAL\",\"text\":\" sit\"}],\"start1\":8,\"start2\":8,\"length1\":13,\"length2\":13}],\"author\":\"TestAuthor\",\"date\":4321,\"stateId\":1234}}";
 
         String text1 = "lorem ipsum dolor sit ame";
         String text2 = "lorem ipsum sequi sit ame";
@@ -50,7 +50,7 @@ public class MessagesTest {
         String text22 = "lorem sequi sit amet, consectetur adipisicing elit";
         assertEquals(text22, dmp.patch_apply(patches, text11)[0]);
 
-        String expected = "{\"patches\":[{\"diffs\":[{\"operation\":\"EQUAL\",\"text\":\"sum \"},{\"operation\":\"DELETE\",\"text\":\"dolor\"},{\"operation\":\"INSERT\",\"text\":\"sequi\"},{\"operation\":\"EQUAL\",\"text\":\" sit\"}],\"start1\":8,\"start2\":8,\"length1\":13,\"length2\":13}],\"author\":\"TestAuthor\",\"date\":4321,\"stateId\":1234}";
+        String expected = "{\"type\":\"TEXT\",\"body\":{\"patches\":[{\"diffs\":[{\"operation\":\"EQUAL\",\"text\":\"sum \"},{\"operation\":\"DELETE\",\"text\":\"dolor\"},{\"operation\":\"INSERT\",\"text\":\"sequi\"},{\"operation\":\"EQUAL\",\"text\":\" sit\"}],\"start1\":8,\"start2\":8,\"length1\":13,\"length2\":13}],\"author\":\"TestAuthor\",\"date\":4321,\"stateId\":1234}}";
         assertEquals(expected, Messages.toJson(Messages.Type.TEXT, message));
     }
 }

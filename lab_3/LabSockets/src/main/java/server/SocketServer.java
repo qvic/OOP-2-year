@@ -25,6 +25,7 @@ public class SocketServer {
                 try {
                     ClientHandler client = new ClientHandler(serverSocket.accept(), messages);
                     clients.add(client);
+                    onConnect(client);
                 } catch (IOException ignored) {
                 }
             }
@@ -48,6 +49,12 @@ public class SocketServer {
         messageHandling.start();
     }
 
+    private void onConnect(ClientHandler clientHandler) {
+        for (Message message: states) {
+            clientHandler.send(message);
+        }
+    }
+
     private void onMessage(JsonNode node) {
         Messages.Type type = Messages.getType(node);
 
@@ -68,9 +75,10 @@ public class SocketServer {
 
     private void broadcast(Message message) {
         for (ClientHandler client : clients) {
-//            if (!client.getAddress().equals(message.getAuthor())) {
+            if (!client.getAddress().equals(message.getAuthor())) {
+
                 client.send(message);
-//            }
+            }
         }
     }
 

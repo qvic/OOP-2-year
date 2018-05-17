@@ -29,7 +29,7 @@ public class MessageReader implements Runnable {
                             Messages.toJsonNode(requestJson),
                             "Cannot process given JSON: " + requestJson
                     );
-//                    Thread.sleep(1000); // fake ping
+//                    Thread.sleep(100); // fake ping
                     System.out.println("Message Received: " + request);
                     messages.put(request);
                 }

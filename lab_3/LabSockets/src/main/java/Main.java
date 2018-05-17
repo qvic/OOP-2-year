@@ -1,3 +1,4 @@
+import client.MainController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -7,9 +8,11 @@ import server.SocketServer;
 
 import java.io.IOException;
 
+import static client.SocketClient.SERVER_PORT;
+
 public class Main extends Application {
 
-    private static final int WIDTH = 500;
+    private static final int WIDTH = 600;
     private static final int HEIGHT = 300;
     private static final String RUN_SERVER = "server";
 
@@ -25,7 +28,7 @@ public class Main extends Application {
 
     private static void runServer() {
         try {
-            SocketServer socketServer = new SocketServer(8080);
+            SocketServer socketServer = new SocketServer(SERVER_PORT);
             socketServer.startListening();
         } catch (IOException e) {
             e.printStackTrace();
@@ -35,12 +38,12 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("layout/main.fxml"));
-        loader.setController(new ui.MainController());
+        loader.setController(new MainController());
         Parent root = loader.load();
 
         Scene scene = new Scene(root, WIDTH, HEIGHT);
 
-        primaryStage.setTitle("Echo");
+        primaryStage.setTitle("LabSockets");
         primaryStage.setScene(scene);
         primaryStage.show();
     }

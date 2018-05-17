@@ -1,9 +1,6 @@
 package client;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
-import models.CursorChange;
-import models.Message;
 import models.Messages;
 import util.MessageHandler;
 import util.MessageReader;
@@ -18,6 +15,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
 
 public class SocketClient {
+
+    public static final String SERVER_IP = "localhost";
+    public static final int SERVER_PORT = 8080;
 
     private PrintWriter out;
     private BufferedReader in;
