@@ -1,10 +1,11 @@
 package controllers;
 
+import game.GameBoard;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Group;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
+import javafx.scene.control.Button;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -15,9 +16,13 @@ import java.util.ResourceBundle;
 
 public class MainController implements Initializable {
     @FXML
-    public Group canvas;
+    private Group canvas;
+
+    @FXML
+    private Button tick;
 
     private Properties gameProperties;
+    private GameBoard board;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -30,6 +35,8 @@ public class MainController implements Initializable {
             e.printStackTrace();
         }
 
-        GameBoard board = new GameBoard(canvas, gameProperties);
+        board = new GameBoard(canvas, gameProperties);
+
+        tick.setOnAction(e -> Platform.runLater(() -> board.tick()));
     }
 }
