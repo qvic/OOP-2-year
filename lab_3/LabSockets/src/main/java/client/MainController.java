@@ -15,6 +15,7 @@ import models.Messages;
 import org.fxmisc.richtext.CaretNode;
 import org.fxmisc.richtext.InlineCssTextArea;
 import org.reactfx.SuspendableNo;
+import server.States;
 
 import java.io.*;
 import java.net.URL;
@@ -28,10 +29,8 @@ public class MainController implements Initializable {
     private SocketClient socketClient;
 
     private boolean ignoreUpdate = false;
-    private int stateId = 0;
     private diff_match_patch patcher = new diff_match_patch();
     private HashMap<String, CaretNode> carets = new HashMap<>();
-    private String buffer = "";
     private Random random = new Random();
 
     @FXML
@@ -82,12 +81,8 @@ public class MainController implements Initializable {
 
         editorArea.textProperty().addListener((observable, oldValue, newValue) -> {
             if (!ignoreUpdate) {
-                LinkedList<diff_match_patch.Patch> patches = patcher.patch_make(oldValue, newValue);
-                Message message = new Message(patches, socketClient.getAddress(), stateId);
+                Message message = new Message(newValue, socketClient.getAddress());
                 socketClient.send(Messages.Type.TEXT, message);
-//                oldEditorValue = oldValue;
-                replaceText(oldValue);
-                buffer = oldValue;
             }
         });
 
@@ -149,8 +144,7 @@ public class MainController implements Initializable {
 
             String result = stringBuilder.toString();
 
-            Message message = new Message(patcher.patch_make(editorArea.getText(), result),
-                    socketClient.getAddress(), stateId);
+            Message message = new Message(result, socketClient.getAddress());
 
             replaceText(result);
             socketClient.send(Messages.Type.TEXT, message);
@@ -183,17 +177,7 @@ public class MainController implements Initializable {
     }
 
     private void updateState(Message message) {
-//        String oldValue;
-//        if (socketClient.getAddress().equals(message.getAuthor())) {
-//            return;
-//        }
-//        } else {
-//            oldValue = editorArea.getText();
-//        }
-        Object[] result = patcher.patch_apply(message.getPatches(), editorArea.getText());
-//        states.add((String) result[0]);
-        replaceText((String) result[0]);
-        stateId = message.getStateId();
+        replaceText(States.diffMerge(editorArea.getText(), message.getBody(), patcher));
     }
 
     private void replaceText(String text) {

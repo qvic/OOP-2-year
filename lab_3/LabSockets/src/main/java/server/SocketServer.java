@@ -62,8 +62,7 @@ public class SocketServer {
 
             Message message = Messages.toMessage(node);
             assert message != null;
-            states.append(message);
-            broadcast(states.getLast());
+            sendOthers(message);
 
         } else if (type == Messages.Type.CURSOR) {
 
@@ -73,11 +72,11 @@ public class SocketServer {
         }
     }
 
-    private void broadcast(Message message) {
+    private void sendOthers(Message message) {
         for (ClientHandler client : clients) {
-//            if (!client.getAddress().equals(message.getAuthor())) {
+            if (!client.getAddress().equals(message.getAuthor())) {
                 client.send(message);
-//            }
+            }
         }
     }
 

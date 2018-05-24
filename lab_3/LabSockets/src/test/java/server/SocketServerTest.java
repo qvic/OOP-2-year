@@ -27,7 +27,7 @@ public class SocketServerTest {
     @Before
     public void setUp() throws Exception {
         dmp = new diff_match_patch();
-        testMessage = new Message(dmp.patch_make("qwty", "qwerty"), "TestAuthor", 0);
+//        testMessage = new Message(dmp.patch_make("qwty", "qwerty"), "TestAuthor", 0);
         socketServer = new SocketServer(TEST_PORT);
         socketServer.startListening();
     }

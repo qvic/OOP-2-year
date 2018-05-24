@@ -19,42 +19,46 @@ public class States implements Iterable<Message> {
         textMessages = new ArrayList<>();
     }
 
-    public void append(Message message) {
-        if (message.getStateId() == textMessages.size()) {
-            message.setStateId(message.getStateId() + 1);
-            textMessages.add(message);
-            return;
-        }
+//    public void append(Message message) {
+//        if (message.getStateId() == 0 && !textMessages.isEmpty()) {
+//            textMessages.clear();
+//        }
+//
+//        if (message.getStateId() == textMessages.size()) {
+//            message.setStateId(message.getStateId() + 1);
+//            textMessages.add(message);
+//            return;
+//        }
+//
+//        String clientStateText = computeState(message.getStateId());
+//
+//        String clientNewStateText = (String) patcher.patch_apply(
+//                message.getPatches(), clientStateText)[0];
+//
+//        String nextStateText = (String) patcher.patch_apply(
+//                getState(message.getStateId() + 1).getPatches(), clientStateText)[0];
+//
+//        String mergedStateText = diffMerge(nextStateText, clientNewStateText);
+//
+//        // todo for loop to the end of textMessages
+//        // states are 1..size
+//        for (int i = message.getStateId() + 2; i <= textMessages.size(); i++) {
+//            clientNewStateText = mergedStateText;
+//            nextStateText = (String) patcher.patch_apply(
+//                    getState(i).getPatches(), nextStateText)[0];
+//            mergedStateText = diffMerge(nextStateText, clientNewStateText);
+//        }
+//
+//        LinkedList<diff_match_patch.Patch> patches = patcher.patch_make(nextStateText, mergedStateText);
+//        textMessages.add(new Message(patches, message.getAuthor(), textMessages.size() + 1));
+//    }
 
-        String clientStateText = computeState(message.getStateId());
-
-        String clientNewStateText = (String) patcher.patch_apply(
-                message.getPatches(), clientStateText)[0];
-
-        String nextStateText = (String) patcher.patch_apply(
-                getState(message.getStateId() + 1).getPatches(), clientStateText)[0];
-
-        String mergedStateText = diffMerge(nextStateText, clientNewStateText);
-
-        // todo for loop to the end of textMessages
-        // states are 1..size
-        for (int i = message.getStateId() + 2; i <= textMessages.size(); i++) {
-            clientNewStateText = mergedStateText;
-            nextStateText = (String) patcher.patch_apply(
-                    getState(i).getPatches(), nextStateText)[0];
-            mergedStateText = diffMerge(nextStateText, clientNewStateText);
-        }
-
-        LinkedList<diff_match_patch.Patch> patches = patcher.patch_make(nextStateText, mergedStateText);
-        textMessages.add(new Message(patches, message.getAuthor(), textMessages.size() + 1));
-    }
-
-    public Message getLast() {
-        if (!textMessages.isEmpty()) {
-            return textMessages.get(textMessages.size() - 1);
-        }
-        throw new NullPointerException("No available states");
-    }
+//    public Message getLast() {
+//        if (!textMessages.isEmpty()) {
+//            return textMessages.get(textMessages.size() - 1);
+//        }
+//        return null;
+//    }
 
     String diffMerge(String text1, String text2) {
         return diffMerge(text1, text2, patcher);
@@ -70,18 +74,18 @@ public class States implements Iterable<Message> {
         return merged.toString();
     }
 
-    String computeState(int stateId) {
-        String result = "";
-        for (int i = 1; i <= stateId; i++) {
-            result = (String) patcher.patch_apply(getState(i).getPatches(), result)[0];
-        }
-        return result;
-    }
-
-    Message getState(int stateId) {
-        return textMessages.get(stateId - 1);
-    }
-
+//    String computeState(int stateId) {
+//        String result = "";
+//        for (int i = 1; i <= stateId; i++) {
+//            result = (String) patcher.patch_apply(getState(i).getPatches(), result)[0];
+//        }
+//        return result;
+//    }
+//
+//    Message getState(int stateId) {
+//        return textMessages.get(stateId - 1);
+//    }
+//
     @Override
     public Iterator<Message> iterator() {
         return textMessages.iterator();
