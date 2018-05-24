@@ -9,7 +9,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
 
 import static org.junit.Assert.*;
 
@@ -54,9 +53,7 @@ public class SocketServerTest {
 
 
         // guarantee all threads finished
-        waitUntilNoError(5000L, () -> {
-            assertEquals(calls.get(), 3);
-        });
+        waitUntilNoError(5000L, () -> assertEquals(calls.get(), 3));
     }
 
     private static  void waitUntilNoError(long millis, Runnable runnable) {

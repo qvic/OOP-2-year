@@ -7,10 +7,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-import static external.diff_match_patch.Operation.DELETE;
-import static external.diff_match_patch.Operation.EQUAL;
-import static external.diff_match_patch.Operation.INSERT;
-
 public class States implements Iterable<Message> {
     private ArrayList<Message> textMessages;
     private diff_match_patch patcher = new diff_match_patch();

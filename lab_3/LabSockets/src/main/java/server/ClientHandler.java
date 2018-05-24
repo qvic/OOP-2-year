@@ -17,7 +17,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 class ClientHandler {
     private PrintWriter out;
     private Socket socket;
-    private int currentCursor;
 
     ClientHandler(Socket socket, LinkedBlockingQueue<JsonNode> messages) throws IOException {
         this.out = new PrintWriter(socket.getOutputStream(), true);

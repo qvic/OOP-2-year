@@ -31,7 +31,6 @@ public class MainController implements Initializable {
     private int stateId = 0;
     private diff_match_patch patcher = new diff_match_patch();
     private HashMap<String, CaretNode> carets = new HashMap<>();
-    private String buffer = "";
     private Random random = new Random();
 
     @FXML
@@ -85,24 +84,20 @@ public class MainController implements Initializable {
                 LinkedList<diff_match_patch.Patch> patches = patcher.patch_make(oldValue, newValue);
                 Message message = new Message(patches, socketClient.getAddress(), stateId);
                 socketClient.send(Messages.Type.TEXT, message);
-//                oldEditorValue = oldValue;
                 replaceText(oldValue);
-                buffer = oldValue;
             }
         });
 
-        editorArea.sceneProperty().addListener((observable, oldValue, newValue) -> {
-            Platform.runLater(() -> {
-                Stage stage = (Stage) newValue.getWindow();
-                stage.setOnCloseRequest(event -> {
-                    try {
-                        socketClient.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                });
+        editorArea.sceneProperty().addListener((observable, oldValue, newValue) -> Platform.runLater(() -> {
+            Stage stage = (Stage) newValue.getWindow();
+            stage.setOnCloseRequest(event -> {
+                try {
+                    socketClient.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             });
-        });
+        }));
     }
 
     private void onSaveAction(ActionEvent actionEvent) {
@@ -150,9 +145,8 @@ public class MainController implements Initializable {
             String result = stringBuilder.toString();
 
             Message message = new Message(patcher.patch_make(editorArea.getText(), result),
-                    socketClient.getAddress(), stateId);
+                    socketClient.getAddress(), 0);
 
-            replaceText(result);
             socketClient.send(Messages.Type.TEXT, message);
 
         } catch (FileNotFoundException e) {
@@ -183,15 +177,7 @@ public class MainController implements Initializable {
     }
 
     private void updateState(Message message) {
-//        String oldValue;
-//        if (socketClient.getAddress().equals(message.getAuthor())) {
-//            return;
-//        }
-//        } else {
-//            oldValue = editorArea.getText();
-//        }
         Object[] result = patcher.patch_apply(message.getPatches(), editorArea.getText());
-//        states.add((String) result[0]);
         replaceText((String) result[0]);
         stateId = message.getStateId();
     }
