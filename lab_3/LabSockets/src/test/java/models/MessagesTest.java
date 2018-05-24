@@ -25,9 +25,7 @@ public class MessagesTest {
         String text1 = "lorem ipsum dolor sit ame";
         String text2 = "lorem ipsum sequi sit ame";
 
-        LinkedList<diff_match_patch.Diff> diffs = dmp.diff_main(text1, text2);
-        dmp.diff_cleanupEfficiency(diffs);
-        LinkedList<diff_match_patch.Patch> patches = dmp.patch_make(text1, diffs);
+        LinkedList<diff_match_patch.Patch> patches = dmp.patch_make(text1, text2);
         Message expected = new Message(patches, "TestAuthor", 1234);
         expected.setDate(new Date(4321));
 
@@ -39,9 +37,7 @@ public class MessagesTest {
         String text1 = "lorem ipsum dolor sit amet";
         String text2 = "lorem ipsum sequi sit amet";
 
-        LinkedList<diff_match_patch.Diff> diffs = dmp.diff_main(text1, text2);
-        dmp.diff_cleanupEfficiency(diffs);
-        LinkedList<diff_match_patch.Patch> patches = dmp.patch_make(text1, diffs);
+        LinkedList<diff_match_patch.Patch> patches = dmp.patch_make(text1, text2);
         Message message = new Message(patches, "TestAuthor", 1234);
         message.setDate(new Date(4321));
 

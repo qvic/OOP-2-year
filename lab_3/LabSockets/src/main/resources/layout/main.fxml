@@ -8,7 +8,7 @@
 <?import org.fxmisc.richtext.InlineCssTextArea?>
 
 <AnchorPane xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
-    <InlineCssTextArea fx:id="editorArea" prefHeight="300.0" prefWidth="600.0" style="-fx-font-size: 16px;" wrapText="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="45.0">
+    <InlineCssTextArea fx:id="editorArea" prefHeight="300.0" prefWidth="600.0" style="-fx-font-size: 18px;" wrapText="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="45.0">
       <padding>
          <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
       </padding></InlineCssTextArea>
