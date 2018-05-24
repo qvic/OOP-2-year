@@ -40,7 +40,7 @@ public class States implements Iterable<Message> {
 //
 //        String mergedStateText = diffMerge(nextStateText, clientNewStateText);
 //
-//        // todo for loop to the end of textMessages
+//        // for loop to the end of textMessages
 //        // states are 1..size
 //        for (int i = message.getStateId() + 2; i <= textMessages.size(); i++) {
 //            clientNewStateText = mergedStateText;
