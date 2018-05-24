@@ -1,7 +1,6 @@
 package util;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import models.Message;
 
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;

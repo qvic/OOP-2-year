@@ -15,7 +15,6 @@ import models.Messages;
 import org.fxmisc.richtext.CaretNode;
 import org.fxmisc.richtext.InlineCssTextArea;
 import org.reactfx.SuspendableNo;
-import server.States;
 
 import java.io.*;
 import java.net.URL;
@@ -29,6 +28,7 @@ public class MainController implements Initializable {
     private SocketClient socketClient;
 
     private boolean ignoreUpdate = false;
+    private int stateId = 0;
     private diff_match_patch patcher = new diff_match_patch();
     private HashMap<String, CaretNode> carets = new HashMap<>();
     private Random random = new Random();
@@ -81,23 +81,23 @@ public class MainController implements Initializable {
 
         editorArea.textProperty().addListener((observable, oldValue, newValue) -> {
             if (!ignoreUpdate) {
-                Message message = new Message(newValue, socketClient.getAddress());
+                LinkedList<diff_match_patch.Patch> patches = patcher.patch_make(oldValue, newValue);
+                Message message = new Message(patches, socketClient.getAddress(), stateId);
                 socketClient.send(Messages.Type.TEXT, message);
+                replaceText(oldValue);
             }
         });
 
-        editorArea.sceneProperty().addListener((observable, oldValue, newValue) -> {
-            Platform.runLater(() -> {
-                Stage stage = (Stage) newValue.getWindow();
-                stage.setOnCloseRequest(event -> {
-                    try {
-                        socketClient.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                });
+        editorArea.sceneProperty().addListener((observable, oldValue, newValue) -> Platform.runLater(() -> {
+            Stage stage = (Stage) newValue.getWindow();
+            stage.setOnCloseRequest(event -> {
+                try {
+                    socketClient.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             });
-        });
+        }));
     }
 
     private void onSaveAction(ActionEvent actionEvent) {
@@ -144,9 +144,9 @@ public class MainController implements Initializable {
 
             String result = stringBuilder.toString();
 
-            Message message = new Message(result, socketClient.getAddress());
+            Message message = new Message(patcher.patch_make(editorArea.getText(), result),
+                    socketClient.getAddress(), 0);
 
-            replaceText(result);
             socketClient.send(Messages.Type.TEXT, message);
 
         } catch (FileNotFoundException e) {
@@ -177,7 +177,9 @@ public class MainController implements Initializable {
     }
 
     private void updateState(Message message) {
-        replaceText(States.diffMerge(editorArea.getText(), message.getBody(), patcher));
+        Object[] result = patcher.patch_apply(message.getPatches(), editorArea.getText());
+        replaceText((String) result[0]);
+        stateId = message.getStateId();
     }
 
     private void replaceText(String text) {

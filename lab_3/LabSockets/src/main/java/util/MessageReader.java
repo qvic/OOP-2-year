@@ -1,7 +1,6 @@
 package util;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import models.Message;
 import models.Messages;
 
 import java.io.BufferedReader;

@@ -20,7 +20,7 @@ public class DiffDeserializer extends StdDeserializer<diff_match_patch.Diff> {
     }
 
     @Override
-    public diff_match_patch.Diff deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+    public diff_match_patch.Diff deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         JsonNode node = p.getCodec().readTree(p);
         diff_match_patch.Operation operation = diff_match_patch.Operation.valueOf(node.get("operation").asText());
         String text = node.get("text").asText();
