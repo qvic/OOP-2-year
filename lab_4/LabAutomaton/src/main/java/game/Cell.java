@@ -1,12 +1,19 @@
 package game;
 
-public class Cell {
-    int i, j;
-    int group;
+public final class Cell {
+    private Position position;
+    private int group;
 
-    public Cell(int i, int j, int group) {
-        this.i = i;
-        this.j = j;
+    public Cell(Position position, int group) {
+        this.position = position;
         this.group = group;
+    }
+
+    public int getGroup() {
+        return group;
+    }
+
+    public Position getPosition() {
+        return position;
     }
 }
