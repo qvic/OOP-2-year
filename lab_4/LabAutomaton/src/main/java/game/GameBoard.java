@@ -9,7 +9,7 @@ import javafx.util.Duration;
 
 import java.util.HashMap;
 import java.util.Properties;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class GameBoard {
     private static final int PADDING = 0;
@@ -27,21 +27,25 @@ public class GameBoard {
     private HashMap<Position, Cell> cells;
     private Group canvas;
     private Properties gameProperties;
-    private Random random;
 
     private int size;
 
-    private int fertility;
-    private int radDisp;
+    private final int fertility;
+    private final int radDisp;
+    private final int radBreed;
+    private final boolean isSexual;
+    private final int time;
 
     public GameBoard(Group canvas, Properties gameProperties) {
         this.canvas = canvas;
         this.gameProperties = gameProperties;
-        random = new Random();
 
         size = Integer.parseInt(this.gameProperties.getProperty("size"));
         fertility = Integer.parseInt(gameProperties.getProperty("fertility"));
         radDisp = Integer.parseInt(gameProperties.getProperty("rad_disp"));
+        radBreed = Integer.parseInt(gameProperties.getProperty("rad_breed"));
+        isSexual = gameProperties.getProperty("sex_breed").equals("sexual");
+        time = Integer.parseInt(gameProperties.getProperty("time"));
 
         cells = new HashMap<>();
 
@@ -77,22 +81,26 @@ public class GameBoard {
 
         for (int group = 0; group < numberOfGroups; group++) {
             for (int i = 0; i < groupSize; i++) {
-                int x = random.nextInt(size);
-                int y = random.nextInt(size);
+                int x = ThreadLocalRandom.current().nextInt(size);
+                int y = ThreadLocalRandom.current().nextInt(size);
 
                 Position position = new Position(x, y);
                 Cell cell = new Cell(position, group);
                 cells.put(position, cell);
-                updateView(cell);
+                displayView(cell);
             }
         }
     }
 
     public void tick() {
         Timeline timeline = new Timeline(new KeyFrame(Duration.millis(100), event -> {
-            asexualReproductionTick();
+            if (isSexual) {
+                sexualReproductionTick();
+            } else {
+                asexualReproductionTick();
+            }
         }));
-        timeline.setCycleCount(100);
+        timeline.setCycleCount(time);
         timeline.play();
     }
 
@@ -100,31 +108,40 @@ public class GameBoard {
         HashMap<Position, Cell> allCells = new HashMap<>(cells);
 
         for (Cell cell : allCells.values()) {
-            for (int i = 0; i < fertility; i++) {
+            populateRadius(cell);
+            removeCellAtPosition(cell.getPosition());
+        }
+    }
 
-                Cell newCell = createInRadius(cell, radDisp);
-                Cell competitorCell = cells.get(newCell.getPosition());
+    private void sexualReproductionTick() {
+        HashMap<Position, Cell> allCells = new HashMap<>(cells);
 
-                if (competitorCell != null) {
-                    if (random.nextBoolean()) { // probability 50%
-                        cells.put(newCell.getPosition(), newCell);
-                        updateView(newCell);
-                    }
-                } else {
-                    cells.put(newCell.getPosition(), newCell);
-                    updateView(newCell);
-                }
+        for (Cell cell : allCells.values()) {
+            Cell partner = findPartner(cell, radBreed);
+            if (partner != null) {
+                populateRadius(cell);
+
+                clearView(cell);
+                removeCellAtPosition(cell.getPosition());
+                clearView(partner);
+                removeCellAtPosition(partner.getPosition());
             }
         }
     }
 
-    private void updateView(Cell cell) {
+    private void displayView(Cell cell) {
         Position position = cell.getPosition();
         Rectangle rectangle = (Rectangle) canvas.getChildren().get(position.getY() * size + position.getX());
         rectangle.setFill(COLORS[cell.getGroup()]);
     }
 
-    private Cell createInRadius(Cell parent, int radius) {
+    private void clearView(Cell cell) {
+        Position position = cell.getPosition();
+        Rectangle rectangle = (Rectangle) canvas.getChildren().get(position.getY() * size + position.getX());
+        rectangle.setFill(Color.TRANSPARENT);
+    }
+
+    private Cell createCell(Cell parent, int radius) {
         Position position = parent.getPosition();
 
         int minX = Math.max(0, position.getX() - radius);
@@ -135,10 +152,53 @@ public class GameBoard {
         int x, y;
 
         do {
-            x = minX + random.nextInt(maxX - minX + 1);
-            y = minY + random.nextInt(maxY - minY + 1);
+            x = minX + ThreadLocalRandom.current().nextInt(maxX - minX + 1);
+            y = minY + ThreadLocalRandom.current().nextInt(maxY - minY + 1);
         } while (x == position.getX() && y == position.getY());
 
         return new Cell(new Position(x, y), parent.getGroup());
+    }
+
+    private void populateRadius(Cell parent) {
+        for (int i = 0; i < fertility; i++) {
+
+            Cell newCell = createCell(parent, radDisp);
+            Cell competitorCell = cells.get(newCell.getPosition());
+
+            if (competitorCell != null) {
+                if (ThreadLocalRandom.current().nextBoolean()) { // probability 50%
+                    displayView(newCell);
+                }
+            } else {
+                cells.put(newCell.getPosition(), newCell);
+                displayView(newCell);
+            }
+        }
+    }
+
+    private void removeCellAtPosition(Position position) {
+        cells.remove(position);
+    }
+
+    private Cell findPartner(Cell cell, int radius) {
+        Position position = cell.getPosition();
+
+        int minX = Math.max(0, position.getX() - radius);
+        int maxX = Math.min(size - 1, position.getX() + radius);
+        int minY = Math.max(0, position.getY() - radius);
+        int maxY = Math.min(size - 1, position.getY() + radius);
+
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                if (x == cell.getPosition().getX() && y == cell.getPosition().getY()) {
+                    continue;
+                }
+                Cell partner = cells.get(new Position(x, y));
+                if (partner != null && partner.getGroup() == cell.getGroup()) {
+                    return partner;
+                }
+            }
+        }
+        return null;
     }
 }

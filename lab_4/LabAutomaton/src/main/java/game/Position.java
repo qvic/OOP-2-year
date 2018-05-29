@@ -2,8 +2,10 @@ package game;
 
 import java.util.Objects;
 
-public final class Position {
-    private int x, y;
+public class Position {
+    private int x;
+
+    private int y;
 
     @Override
     public boolean equals(Object o) {
