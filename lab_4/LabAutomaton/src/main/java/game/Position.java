@@ -5,6 +5,11 @@ import java.util.Objects;
 public class Position {
     private int x;
 
+    @Override
+    public String toString() {
+        return "{" + x + ", " + y + "}";
+    }
+
     private int y;
 
     @Override

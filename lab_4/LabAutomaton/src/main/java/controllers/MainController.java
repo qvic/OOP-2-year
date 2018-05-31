@@ -18,7 +18,10 @@ public class MainController implements Initializable {
     private Group canvas;
 
     @FXML
-    private Button tick;
+    private Button play;
+
+    @FXML
+    private Button resettle;
 
     private Properties gameProperties;
     private GameBoard board;
@@ -36,6 +39,7 @@ public class MainController implements Initializable {
 
         board = new GameBoard(canvas, gameProperties);
 
-        tick.setOnAction(e -> board.play());
+        play.setOnAction(e -> board.play());
+        resettle.setOnAction(e -> board.resettle());
     }
 }

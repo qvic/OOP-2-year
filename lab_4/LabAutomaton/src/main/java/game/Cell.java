@@ -1,8 +1,21 @@
 package game;
 
-public final class Cell {
+import java.util.concurrent.atomic.AtomicBoolean;
+
+public class Cell {
     private Position position;
     private int group;
+    private AtomicBoolean locked = new AtomicBoolean(false);
+
+    public boolean lock() {
+        // if the cell is locked, no one can interbreed with it
+        // returns was the lock successful
+        return locked.compareAndSet(false, true);
+    }
+
+    public boolean isLocked() {
+        return locked.get();
+    }
 
     public Cell(Position position, int group) {
         this.position = position;
@@ -12,7 +25,8 @@ public final class Cell {
     @Override
     public String toString() {
         return "Cell{" +
-                "group=" + group +
+                "position=" + position +
+                ", group=" + group +
                 '}';
     }
 

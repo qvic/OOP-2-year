@@ -8,7 +8,9 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -118,16 +120,28 @@ public class GameBoard {
                 int x = ThreadLocalRandom.current().nextInt(size);
                 int y = ThreadLocalRandom.current().nextInt(size);
 
-                Position position = new Position(x, y);
-                Cell cell = new Cell(position, group);
-                cells.get(y).set(x, cell);
-                displayCellView(cell);
+                if (cells.get(y).get(x) == null) {
+                    Position position = new Position(x, y);
+                    Cell cell = new Cell(position, group);
+                    cells.get(y).set(x, cell);
+                    displayCellView(cell);
+                } else {
+                    i--; // repeat process
+                }
             }
         }
     }
 
-    public void play() {
-        ticker.play();
+    public void resettle() {
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                cells.get(i).set(j, null);
+                Rectangle rectangle = (Rectangle) canvas.getChildren().get(i * size + j);
+                rectangle.setFill(Color.TRANSPARENT);
+            }
+        }
+
+        settle();
     }
 
     private void asexualReproductionTick() {
@@ -154,38 +168,44 @@ public class GameBoard {
     }
 
     private void sexualReproductionTick() {
-//        Cell[][] allCells = new Cell[size][size];
-//        for (int i = 0; i < size; i++) {
-//            allCells[i] = new Cell[size];
-//            System.arraycopy(cells[i], 0, allCells[i], 0, size);
-//        }
-//
-//        for (int i = 0; i < size; i++) {
-//            for (int j = 0; j < size; j++) {
-//                if (cells[i][j] != null) {
-//                    int finalI = i;
-//                    int finalJ = j;
-//                    executorService.submit(() -> {
-//                        Cell cell = cells[finalI][finalJ];
-//                        Cell partner = findPartner(cell, radBreed);
-//                        if (partner != null) {
-//                            populateRadius(cell);
-//                            removeCell(partner.getPosition()); // don't care if someone has removed it
-//                            clearCellView(partner);
-//                            removeCell(cell.getPosition());
-//                            clearCellView(cell);
-//                        }
-//                    });
-//                }
-//            }
-//        }
+        Cell[][] cellsCopy = new Cell[size][size];
+        for (int i = 0; i < size; i++) { // find better approach
+            for (int j = 0; j < size; j++) {
+                cellsCopy[i][j] = cells.get(i).get(j);
+            }
+        }
+
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if (cellsCopy[i][j] != null) {
+                    int finalI = i;
+                    int finalJ = j;
+                    executorService.submit(() -> {
+                        Cell cell, partner;
+                        synchronized (this) {
+                            cell = cellsCopy[finalI][finalJ];
+                            if (!cell.lock()) return;
+                            partner = findPartner(cellsCopy, cell, radBreed);
+                            if (partner == null || !partner.lock()) return;
+                        }
+
+                        if (partner.isLocked()) {
+                            System.out.println(cell + " + " + partner);
+                            populateRadius(cell);
+                            removeCell(cell);
+                            removeCell(partner);
+                        }
+                    });
+                }
+            }
+        }
     }
 
     private void displayCellView(Cell cell) {
         Platform.runLater(() -> {
             if (cell == null) return;
             Position position = cell.getPosition();
-            Rectangle rectangle = (Rectangle) canvas.getChildren().get(position.getY() * size + position.getX());
+            Rectangle rectangle = (Rectangle) canvas.getChildren().get(position.getX() * size + position.getY());
             rectangle.setFill(COLORS[cell.getGroup()]);
         });
     }
@@ -194,27 +214,9 @@ public class GameBoard {
         Platform.runLater(() -> {
             if (cell == null) return;
             Position position = cell.getPosition();
-            Rectangle rectangle = (Rectangle) canvas.getChildren().get(position.getY() * size + position.getX());
+            Rectangle rectangle = (Rectangle) canvas.getChildren().get(position.getX() * size + position.getY());
             rectangle.setFill(Color.TRANSPARENT);
         });
-    }
-
-    private Cell createCell(Cell parent, int radius) {
-        Position position = parent.getPosition();
-
-        int minX = Math.max(0, position.getX() - radius);
-        int maxX = Math.min(size - 1, position.getX() + radius);
-        int minY = Math.max(0, position.getY() - radius);
-        int maxY = Math.min(size - 1, position.getY() + radius);
-
-        int x, y;
-
-        do {
-            x = minX + ThreadLocalRandom.current().nextInt(maxX - minX + 1);
-            y = minY + ThreadLocalRandom.current().nextInt(maxY - minY + 1);
-        } while (x == position.getX() && y == position.getY());
-
-        return new Cell(new Position(x, y), parent.getGroup());
     }
 
     private void populateRadius(Cell parent) {
@@ -243,7 +245,25 @@ public class GameBoard {
         }
     }
 
-    private Cell findPartner(Cell cell, int radius) {
+    private Cell createCell(Cell parent, int radius) {
+        Position position = parent.getPosition();
+
+        int minX = Math.max(0, position.getX() - radius);
+        int maxX = Math.min(size - 1, position.getX() + radius);
+        int minY = Math.max(0, position.getY() - radius);
+        int maxY = Math.min(size - 1, position.getY() + radius);
+
+        int x, y;
+
+        do {
+            x = ThreadLocalRandom.current().nextInt(minX, maxX + 1);
+            y = ThreadLocalRandom.current().nextInt(minY, maxY + 1);
+        } while (x == position.getX() && y == position.getY());
+
+        return new Cell(new Position(x, y), parent.getGroup());
+    }
+
+    private Cell findPartner(Cell[][] searchArea, Cell cell, int radius) {
         Position position = cell.getPosition();
 
         int minX = Math.max(0, position.getX() - radius);
@@ -251,17 +271,30 @@ public class GameBoard {
         int minY = Math.max(0, position.getY() - radius);
         int maxY = Math.min(size - 1, position.getY() + radius);
 
-        for (int x = minX; x <= maxX; x++) {
-            for (int y = minY; y <= maxY; y++) {
-                if (x == cell.getPosition().getX() && y == cell.getPosition().getY()) {
-                    continue;
-                }
-                Cell partner = cells.get(y).get(x);
+        // random order of partner search
+        // find better approach
+        int possiblePartnerPositions = (maxX - minX + 1) * (maxY - minY + 1) - 1;
+        Set<Position> alreadyChecked = new HashSet<>(possiblePartnerPositions);
+
+        while (alreadyChecked.size() < possiblePartnerPositions) {
+            int x = ThreadLocalRandom.current().nextInt(minX, maxX + 1);
+            int y = ThreadLocalRandom.current().nextInt(minY, maxY + 1);
+            if (x == cell.getPosition().getX() && y == cell.getPosition().getY()) {
+                continue;
+            }
+            Position partnerPosition = new Position(x, y);
+            if (!alreadyChecked.contains(partnerPosition)) {
+                Cell partner = searchArea[y][x];
                 if (partner != null && partner.getGroup() == cell.getGroup()) {
                     return partner;
                 }
+                alreadyChecked.add(partnerPosition);
             }
         }
         return null;
+    }
+
+    public void play() {
+        ticker.play();
     }
 }
