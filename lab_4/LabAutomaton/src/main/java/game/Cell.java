@@ -13,6 +13,10 @@ public class Cell {
         return locked.compareAndSet(false, true);
     }
 
+    public boolean unlock() {
+        return locked.compareAndSet(true, false);
+    }
+
     public boolean isLocked() {
         return locked.get();
     }

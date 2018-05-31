@@ -181,19 +181,21 @@ public class GameBoard {
                     int finalI = i;
                     int finalJ = j;
                     executorService.submit(() -> {
-                        Cell cell, partner;
+                        Cell cell = cellsCopy[finalI][finalJ], partner;
                         synchronized (this) {
-                            cell = cellsCopy[finalI][finalJ];
-                            if (!cell.lock()) return;
                             partner = findPartner(cellsCopy, cell, radBreed);
-                            if (partner == null || !partner.lock()) return;
+                            if (partner == null) return;
+                            if (!cell.lock()) return;
+                            if (!partner.lock()) {
+                                cell.unlock();
+                                return;
+                            }
                         }
 
-                        if (partner.isLocked()) {
-                            System.out.println(cell + " + " + partner);
-                            populateRadius(cell);
+                        if (cell.isLocked() && partner.isLocked()) {
                             removeCell(cell);
                             removeCell(partner);
+                            populateRadius(cell);
                         }
                     });
                 }
