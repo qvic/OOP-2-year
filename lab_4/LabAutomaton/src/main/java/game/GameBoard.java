@@ -11,6 +11,7 @@ import javafx.util.Duration;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
@@ -32,7 +33,7 @@ public class GameBoard {
     private AtomicReferenceArray<AtomicReferenceArray<Cell>> cells;
     private Group canvas;
     private Properties gameProperties;
-    private final Timeline timeline;
+    private final Timeline ticker;
 
     private final int size;
 
@@ -41,7 +42,7 @@ public class GameBoard {
     private final int radBreed;
     private final boolean isSexual;
     private final int time;
-    private ExecutorService executorService;
+    private final ExecutorService executorService;
 
     public GameBoard(Group canvas, Properties gameProperties) {
         this.canvas = canvas;
@@ -59,16 +60,28 @@ public class GameBoard {
             cells.set(i, new AtomicReferenceArray<>(size));
         }
 
-        executorService = Executors.newFixedThreadPool(THREADS);
+        final ThreadFactory threadFactory = new ThreadFactory() {
+            private int counter = 0;
 
-        timeline = new Timeline(new KeyFrame(Duration.millis(TICK_DURATION), event -> {
+            @Override
+            public Thread newThread(Runnable r) {
+                Thread thread = new Thread(r, "CellWorker-" + counter);
+                counter++;
+                thread.setDaemon(true);
+                return thread;
+            }
+        };
+
+        executorService = Executors.newFixedThreadPool(THREADS, threadFactory);
+
+        ticker = new Timeline(new KeyFrame(Duration.millis(TICK_DURATION), event -> {
             if (isSexual) {
                 sexualReproductionTick();
             } else {
                 asexualReproductionTick();
             }
         }));
-        timeline.setCycleCount(time);
+        ticker.setCycleCount(time);
 
         drawGrid(CANVAS_SIZE / size);
         settle();
@@ -114,7 +127,7 @@ public class GameBoard {
     }
 
     public void play() {
-        timeline.play();
+        ticker.play();
     }
 
     private void asexualReproductionTick() {
@@ -208,20 +221,19 @@ public class GameBoard {
         for (int i = 0; i < fertility; i++) {
 
             Cell newCell = createCell(parent, radDisp);
-            Cell competitorCell = cells.get(newCell.getY()).get(newCell.getX());
 
-            if (competitorCell != null) {
+            cells.get(newCell.getY()).accumulateAndGet(newCell.getX(), newCell, (owner, claimant) -> {
+                // must be side-effect free
+                if (owner == null) {
+                    return claimant;
+                }
                 if (ThreadLocalRandom.current().nextBoolean()) { // probability 50%
-                    if (cells.get(newCell.getY()).compareAndSet(newCell.getX(), competitorCell, newCell)) {
-                        displayCellView(cells.get(newCell.getY()).get(newCell.getX())); // will display correct
-                        // even if competitorCell changes
-                    }
+                    return claimant;
                 }
-            } else {
-                if (cells.get(newCell.getY()).compareAndSet(newCell.getX(), null, newCell)) {
-                    displayCellView(cells.get(newCell.getY()).get(newCell.getX()));
-                }
-            }
+                return owner;
+            });
+
+            displayCellView(cells.get(newCell.getY()).get(newCell.getX()));
         }
     }
 
