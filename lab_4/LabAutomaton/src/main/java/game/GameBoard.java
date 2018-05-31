@@ -12,10 +12,11 @@ import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
 public class GameBoard {
     private static final int PADDING = 0;
-    private static final int CELL_SIZE = 20;
+    private static final int CANVAS_SIZE = 600;
     private static final double STROKE_WIDTH = 1.0;
     private static final Color STROKE_COLOR = Color.BLACK;
     private static final Color[] COLORS = {
@@ -26,12 +27,14 @@ public class GameBoard {
             Color.rgb(155, 89, 182)
     };
     public static final int THREADS = 4;
+    public static final int TICK_DURATION = 200;
 
-    private Cell[][] cells;
+    private AtomicReferenceArray<AtomicReferenceArray<Cell>> cells;
     private Group canvas;
     private Properties gameProperties;
+    private final Timeline timeline;
 
-    private int size;
+    private final int size;
 
     private final int fertility;
     private final int radDisp;
@@ -51,23 +54,35 @@ public class GameBoard {
         isSexual = gameProperties.getProperty("sex_breed").equals("sexual");
         time = Integer.parseInt(gameProperties.getProperty("time"));
 
-        cells = new Cell[size][size];
+        cells = new AtomicReferenceArray<>(size);
+        for (int i = 0; i < size; i++) {
+            cells.set(i, new AtomicReferenceArray<>(size));
+        }
 
         executorService = Executors.newFixedThreadPool(THREADS);
 
-        drawGrid();
+        timeline = new Timeline(new KeyFrame(Duration.millis(TICK_DURATION), event -> {
+            if (isSexual) {
+                sexualReproductionTick();
+            } else {
+                asexualReproductionTick();
+            }
+        }));
+        timeline.setCycleCount(time);
+
+        drawGrid(CANVAS_SIZE / size);
         settle();
     }
 
-    private void drawGrid() {
+    private void drawGrid(int cellSize) {
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
                 Rectangle rect = new Rectangle();
 
-                rect.setX(i * (CELL_SIZE + PADDING));
-                rect.setY(j * (CELL_SIZE + PADDING));
-                rect.setWidth(CELL_SIZE);
-                rect.setHeight(CELL_SIZE);
+                rect.setX(i * (cellSize + PADDING));
+                rect.setY(j * (cellSize + PADDING));
+                rect.setWidth(cellSize);
+                rect.setHeight(cellSize);
                 rect.setStrokeWidth(STROKE_WIDTH);
                 rect.setStroke(STROKE_COLOR);
                 rect.setFill(Color.TRANSPARENT);
@@ -92,35 +107,33 @@ public class GameBoard {
 
                 Position position = new Position(x, y);
                 Cell cell = new Cell(position, group);
-                cells[y][x] = cell;
-                displayView(cell);
+                cells.get(y).set(x, cell);
+                displayCellView(cell);
             }
         }
     }
 
-    public void tick() {
-        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(100), event -> {
-            if (isSexual) {
-                sexualReproductionTick();
-            } else {
-                asexualReproductionTick();
-            }
-        }));
-        timeline.setCycleCount(time);
+    public void play() {
         timeline.play();
     }
 
     private void asexualReproductionTick() {
+        Cell[][] cellsCopy = new Cell[size][size];
+        for (int i = 0; i < size; i++) { // find better approach
+            for (int j = 0; j < size; j++) {
+                cellsCopy[i][j] = cells.get(i).get(j);
+            }
+        }
+
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
-                if (cells[i][j] != null) {
+                if (cellsCopy[i][j] != null) {
                     int finalI = i;
                     int finalJ = j;
                     executorService.submit(() -> {
-                        Cell cell = cells[finalI][finalJ];
+                        Cell cell = cellsCopy[finalI][finalJ];
                         populateRadius(cell);
-                        removeCellAtPosition(cell.getPosition()); // don't care if someone has removed it
-                        clearView(cell);
+                        removeCell(cell);
                     });
                 }
             }
@@ -128,37 +141,45 @@ public class GameBoard {
     }
 
     private void sexualReproductionTick() {
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                if (cells[i][j] != null) {
-                    int finalI = i;
-                    int finalJ = j;
-                    executorService.submit(() -> {
-                        Cell cell = cells[finalI][finalJ];
-                        Cell partner = findPartner(cell, radBreed);
-                        if (partner != null) {
-                            populateRadius(cell);
-                            removeCellAtPosition(partner.getPosition()); // don't care if someone has removed it
-                            clearView(partner);
-                            removeCellAtPosition(cell.getPosition());
-                            clearView(cell);
-                        }
-                    });
-                }
-            }
-        }
+//        Cell[][] allCells = new Cell[size][size];
+//        for (int i = 0; i < size; i++) {
+//            allCells[i] = new Cell[size];
+//            System.arraycopy(cells[i], 0, allCells[i], 0, size);
+//        }
+//
+//        for (int i = 0; i < size; i++) {
+//            for (int j = 0; j < size; j++) {
+//                if (cells[i][j] != null) {
+//                    int finalI = i;
+//                    int finalJ = j;
+//                    executorService.submit(() -> {
+//                        Cell cell = cells[finalI][finalJ];
+//                        Cell partner = findPartner(cell, radBreed);
+//                        if (partner != null) {
+//                            populateRadius(cell);
+//                            removeCell(partner.getPosition()); // don't care if someone has removed it
+//                            clearCellView(partner);
+//                            removeCell(cell.getPosition());
+//                            clearCellView(cell);
+//                        }
+//                    });
+//                }
+//            }
+//        }
     }
 
-    private void displayView(Cell cell) {
+    private void displayCellView(Cell cell) {
         Platform.runLater(() -> {
+            if (cell == null) return;
             Position position = cell.getPosition();
             Rectangle rectangle = (Rectangle) canvas.getChildren().get(position.getY() * size + position.getX());
             rectangle.setFill(COLORS[cell.getGroup()]);
         });
     }
 
-    private void clearView(Cell cell) {
+    private void clearCellView(Cell cell) {
         Platform.runLater(() -> {
+            if (cell == null) return;
             Position position = cell.getPosition();
             Rectangle rectangle = (Rectangle) canvas.getChildren().get(position.getY() * size + position.getX());
             rectangle.setFill(Color.TRANSPARENT);
@@ -187,28 +208,27 @@ public class GameBoard {
         for (int i = 0; i < fertility; i++) {
 
             Cell newCell = createCell(parent, radDisp);
+            Cell competitorCell = cells.get(newCell.getY()).get(newCell.getX());
 
-            synchronized (this) {
-                if (cells[parent.getPosition().getY()][parent.getPosition().getX()] != parent) {
-                    break;
-                }
-                Cell competitorCell = cells[newCell.getPosition().getY()][newCell.getPosition().getX()];
-
-                if (competitorCell != null) {
-                    if (ThreadLocalRandom.current().nextBoolean()) { // probability 50%
-                        cells[newCell.getPosition().getY()][newCell.getPosition().getX()] = newCell;
-                        displayView(newCell);
+            if (competitorCell != null) {
+                if (ThreadLocalRandom.current().nextBoolean()) { // probability 50%
+                    if (cells.get(newCell.getY()).compareAndSet(newCell.getX(), competitorCell, newCell)) {
+                        displayCellView(cells.get(newCell.getY()).get(newCell.getX())); // will display correct
+                        // even if competitorCell changes
                     }
-                } else {
-                    cells[newCell.getPosition().getY()][newCell.getPosition().getX()] = newCell;
-                    displayView(newCell);
+                }
+            } else {
+                if (cells.get(newCell.getY()).compareAndSet(newCell.getX(), null, newCell)) {
+                    displayCellView(cells.get(newCell.getY()).get(newCell.getX()));
                 }
             }
         }
     }
 
-    private void removeCellAtPosition(Position position) {
-        cells[position.getY()][position.getX()] = null;
+    private void removeCell(Cell cell) {
+        if (cells.get(cell.getY()).compareAndSet(cell.getX(), cell, null)) {
+            clearCellView(cell);
+        }
     }
 
     private Cell findPartner(Cell cell, int radius) {
@@ -224,7 +244,7 @@ public class GameBoard {
                 if (x == cell.getPosition().getX() && y == cell.getPosition().getY()) {
                     continue;
                 }
-                Cell partner = cells[y][x];
+                Cell partner = cells.get(y).get(x);
                 if (partner != null && partner.getGroup() == cell.getGroup()) {
                     return partner;
                 }

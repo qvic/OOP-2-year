@@ -1,7 +1,6 @@
 package controllers;
 
 import game.GameBoard;
-import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Group;
@@ -37,6 +36,6 @@ public class MainController implements Initializable {
 
         board = new GameBoard(canvas, gameProperties);
 
-        tick.setOnAction(e -> Platform.runLater(() -> board.tick()));
+        tick.setOnAction(e -> board.play());
     }
 }
