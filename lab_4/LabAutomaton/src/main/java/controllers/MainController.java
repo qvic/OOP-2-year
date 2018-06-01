@@ -38,6 +38,7 @@ public class MainController implements Initializable {
         }
 
         board = new GameBoard(canvas, gameProperties);
+        board.settle();
 
         play.setOnAction(e -> board.play());
         resettle.setOnAction(e -> board.resettle());

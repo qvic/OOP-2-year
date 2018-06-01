@@ -8,6 +8,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
@@ -29,10 +30,10 @@ public class GameBoard {
             Color.rgb(26, 188, 156),
             Color.rgb(155, 89, 182)
     };
-    public static final int THREADS = 4;
-    public static final int TICK_DURATION = 200;
+    private static final int THREADS = 4;
+    private static final int TICK_DURATION = 100;
 
-    private AtomicReferenceArray<AtomicReferenceArray<Cell>> cells;
+    private ArrayList<AtomicReferenceArray<Cell>> cells;
     private Group canvas;
     private Properties gameProperties;
     private final Timeline ticker;
@@ -57,9 +58,9 @@ public class GameBoard {
         isSexual = gameProperties.getProperty("sex_breed").equals("sexual");
         time = Integer.parseInt(gameProperties.getProperty("time"));
 
-        cells = new AtomicReferenceArray<>(size);
+        cells = new ArrayList<>(size);
         for (int i = 0; i < size; i++) {
-            cells.set(i, new AtomicReferenceArray<>(size));
+            cells.add(new AtomicReferenceArray<>(size));
         }
 
         final ThreadFactory threadFactory = new ThreadFactory() {
@@ -86,7 +87,6 @@ public class GameBoard {
         ticker.setCycleCount(time);
 
         drawGrid(CANVAS_SIZE / size);
-        settle();
     }
 
     private void drawGrid(int cellSize) {
@@ -123,13 +123,21 @@ public class GameBoard {
                 if (cells.get(y).get(x) == null) {
                     Position position = new Position(x, y);
                     Cell cell = new Cell(position, group);
-                    cells.get(y).set(x, cell);
+                    put(cell);
                     displayCellView(cell);
                 } else {
                     i--; // repeat process
                 }
             }
         }
+    }
+
+    protected void put(Cell cell) {
+        cells.get(cell.getY()).set(cell.getX(), cell);
+    }
+
+    protected Cell get(int x, int y) {
+        return cells.get(y).get(x);
     }
 
     public void resettle() {
@@ -144,7 +152,7 @@ public class GameBoard {
         settle();
     }
 
-    private void asexualReproductionTick() {
+    protected void asexualReproductionTick() {
         Cell[][] cellsCopy = new Cell[size][size];
         for (int i = 0; i < size; i++) { // find better approach
             for (int j = 0; j < size; j++) {
@@ -167,7 +175,7 @@ public class GameBoard {
         }
     }
 
-    private void sexualReproductionTick() {
+    protected void sexualReproductionTick() {
         Cell[][] cellsCopy = new Cell[size][size];
         for (int i = 0; i < size; i++) { // find better approach
             for (int j = 0; j < size; j++) {
@@ -221,12 +229,14 @@ public class GameBoard {
         });
     }
 
-    private void populateRadius(Cell parent) {
+    protected void populateRadius(Cell parent) {
+        ArrayList<Cell> excluded = new ArrayList<>(fertility);
         for (int i = 0; i < fertility; i++) {
 
-            Cell newCell = createCell(parent, radDisp);
+            Cell newCell = createCell(parent, radDisp, excluded);
+            if (newCell == null) continue;
 
-            cells.get(newCell.getY()).accumulateAndGet(newCell.getX(), newCell, (owner, claimant) -> {
+            newCell = cells.get(newCell.getY()).accumulateAndGet(newCell.getX(), newCell, (owner, claimant) -> {
                 // must be side-effect free
                 if (owner == null) {
                     return claimant;
@@ -236,6 +246,10 @@ public class GameBoard {
                 }
                 return owner;
             });
+
+            if (newCell.getGroup() == parent.getGroup()) {
+                excluded.add(newCell);
+            }
 
             displayCellView(cells.get(newCell.getY()).get(newCell.getX()));
         }
@@ -247,22 +261,30 @@ public class GameBoard {
         }
     }
 
-    private Cell createCell(Cell parent, int radius) {
-        Position position = parent.getPosition();
+    private Cell createCell(Cell parent, int radius, ArrayList<Cell> exclude) {
+        // returns null if no cell can be created
 
-        int minX = Math.max(0, position.getX() - radius);
-        int maxX = Math.min(size - 1, position.getX() + radius);
-        int minY = Math.max(0, position.getY() - radius);
-        int maxY = Math.min(size - 1, position.getY() + radius);
+        Position parentPosition = parent.getPosition();
 
-        int x, y;
+        int minX = Math.max(0, parentPosition.getX() - radius);
+        int maxX = Math.min(size - 1, parentPosition.getX() + radius);
+        int minY = Math.max(0, parentPosition.getY() - radius);
+        int maxY = Math.min(size - 1, parentPosition.getY() + radius);
+
+        if (exclude.size() >= (maxX - minX + 1) * (maxY - minY + 1) - 1) {
+            return null;
+        }
+
+        final Position position = new Position(parentPosition.getX(), parentPosition.getY());
 
         do {
-            x = ThreadLocalRandom.current().nextInt(minX, maxX + 1);
-            y = ThreadLocalRandom.current().nextInt(minY, maxY + 1);
-        } while (x == position.getX() && y == position.getY());
+            position.setX(
+                    ThreadLocalRandom.current().nextInt(minX, maxX + 1));
+            position.setY(ThreadLocalRandom.current().nextInt(minY, maxY + 1));
 
-        return new Cell(new Position(x, y), parent.getGroup());
+        } while (parentPosition.equals(position) || exclude.stream().anyMatch(cell -> cell.getPosition().equals(position)));
+
+        return new Cell(position, parent.getGroup());
     }
 
     private Cell findPartner(Cell[][] searchArea, Cell cell, int radius) {
