@@ -1,0 +1,21 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor Train
+actor :Control Unit: as CU
+
+rectangle Board {
+
+Train -- (Commit train arrival) : arrives
+
+note "if arrival time doesn't match with schedule time" as ifNote
+(Commit train arrival) . ifNote
+ifNote .> (Save as schedule violation) : <<include>>
+(Commit train arrival) ..> (Update last arrival time) : <<include>>
+
+CU -- (Send schedule violations data) : requests schedule violations
+CU -- (Apply schedule updates) : sends schedule updates
+CU -- (Update time) : \nsends time updates
+}
+@enduml

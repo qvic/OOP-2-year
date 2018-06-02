@@ -1,0 +1,57 @@
+@startuml
+class Time {
+	+getSeconds()
+	+getMinutes()
+	{method}...
+}
+
+interface Display {
+	+void updateAd(String ad)
+	+void updateEndStation(String station)
+	+void updateTime(Time time)
+	+void updateDepartureTime(Time time)
+}
+
+interface Sensor {
+	+setListener(Runnable onActivation)
+}
+
+interface Connection {
+	+void send(Object message)
+	+void onReceive(Supplier<Object> message)
+}
+
+class ControlUnit {
+	-Connection[] boardConnections
+	-DatabaseConnection database
+	-Time currentTime
+
+	+void broadcastTime()
+	+void sendSchedule()
+	+void sendAds()
+}
+
+class Board {
+	-Connection controlUnitConnection
+	-Integer nextTrainId
+	-Time lastDepartureTime
+	-Display display
+	-Sensor arrivalSensor
+	-Sensor departureSensor
+	-DatabaseConnection database 
+
+	-void sendScheduleViolations()
+
+	+Board(Display display, Sensor arrivalSensor, Sensor departureSensor)
+	+void run()
+}
+
+Board "1" *-- Display
+Board "1" *-- Connection
+Board "2" *-- Sensor
+Board "many" --> "1" ControlUnit
+Time --> Display
+Time --> ControlUnit
+Time -> Board
+
+@enduml
