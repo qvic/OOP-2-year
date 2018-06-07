@@ -12,7 +12,7 @@ Train -- (Commit train arrival) : arrives
 note "if arrival time doesn't match with schedule time" as ifNote
 (Commit train arrival) . ifNote
 ifNote .> (Save as schedule violation) : <<include>>
-(Commit train arrival) ..> (Update last arrival time) : <<include>>
+(Commit train arrival) ..> (Update last departure time) : <<include>>
 
 CU -- (Send schedule violations data) : requests schedule violations
 CU -- (Apply schedule updates) : sends schedule updates

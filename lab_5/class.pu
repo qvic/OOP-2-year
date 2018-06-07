@@ -1,8 +1,8 @@
 @startuml
 class Time {
-	+getSeconds()
-	+getMinutes()
-	{method}...
+	+Integer getSeconds()
+	+Integer getMinutes()
+	+Integer getHours()
 }
 
 interface Display {
@@ -13,12 +13,28 @@ interface Display {
 }
 
 interface Sensor {
-	+setListener(Runnable onActivation)
+	+void setListener(Runnable onActivation)
 }
 
 interface Connection {
 	+void send(Object message)
 	+void onReceive(Supplier<Object> message)
+}
+
+interface DatabaseConnection {
+	+Integer getNextTrainID(Integer trainID)
+	+Time getArrivalTimeByID(Integer trainID)
+	+String getEndStation(Integer trainID)
+
+	+String getAd(Integer adId)
+	+Integer getNextAdID(Integer adId)
+
+	+void saveAsViolation(Integer trainID, Time delta)
+	+Map getViolations()
+
+	+void applyAdsUpdates(String[] ads)
+	+void applyScheduleUpdates(Integer[] trainIDs, 
+	Time[] arrivalTime, String[] endStations)
 }
 
 class ControlUnit {
@@ -29,18 +45,25 @@ class ControlUnit {
 	+void broadcastTime()
 	+void sendSchedule()
 	+void sendAds()
+	+void requestScheduleViolations()
 }
 
 class Board {
 	-Connection controlUnitConnection
+
 	-Integer nextTrainId
 	-Time lastDepartureTime
+	-Time globalTime
+
 	-Display display
 	-Sensor arrivalSensor
 	-Sensor departureSensor
+
 	-DatabaseConnection database 
 
 	-void sendScheduleViolations()
+	-void stopUpdatingDepartureTime()
+	-void startUpdatingDepartureTime()
 
 	+Board(Display display, Sensor arrivalSensor, Sensor departureSensor)
 	+void run()
@@ -48,8 +71,9 @@ class Board {
 
 Board "1" *-- Display
 Board "1" *-- Connection
+Board "1" *- DatabaseConnection
 Board "2" *-- Sensor
-Board "many" --> "1" ControlUnit
+Board "many" .. "1" ControlUnit
 Time --> Display
 Time --> ControlUnit
 Time -> Board

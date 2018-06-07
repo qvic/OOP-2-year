@@ -1,0 +1,30 @@
+@startuml
+
+object lcdDisplay
+
+object infraredArrivalSensor
+object mechanicalDepartureSensor
+
+object lastDepartureTime {
+	seconds = 50
+}
+
+object globalTime {
+	seconds = 1528407419
+}
+
+object board {
+	nextTrainId = 1
+	currentAdId = 3
+}
+
+object controlUnit
+
+lcdDisplay -* board : display
+lastDepartureTime --* board : lastDepartureTime
+globalTime --* board : lastDepartureTime
+infraredArrivalSensor --* board : arrivalSensor
+mechanicalDepartureSensor ---* board : departureSensor
+board .. controlUnit : controlUnitConnection
+
+@enduml

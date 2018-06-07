@@ -1,0 +1,10 @@
+@startuml
+node ControlUnit
+node Board
+database Database
+
+ControlUnit .. Board
+
+Board - Database
+
+@enduml

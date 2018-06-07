@@ -1,0 +1,14 @@
+@startuml
+node {
+	database Database
+	node Display
+	node Sensors
+	[Board] <-- Database
+	[Board] --> Display
+	[Board] <-- Sensors
+} 
+
+[ControlUnit] -down- Connection
+[Board] -up- Connection
+
+@enduml

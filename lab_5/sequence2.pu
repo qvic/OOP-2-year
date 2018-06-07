@@ -1,0 +1,17 @@
+@startuml
+controlUnit -> board : broadcastTime()
+board -> display : updateTime()
+database databaseConnection
+
+controlUnit -> board : sendSchedule()
+board -> databaseConnection : applyScheduleUpdates()
+
+controlUnit -> board : sendAds()
+board -> databaseConnection : applyAdsUpdates()
+
+controlUnit -> board : requestScheduleViolations()
+board -> databaseConnection : getViolations()
+board <-- databaseConnection
+controlUnit <-- board : sendScheduleViolations()
+
+@enduml

@@ -1,0 +1,21 @@
+@startuml
+actor "Train (trainID)" as Train
+
+Train -> board : arrives
+board -> display : updateDepartureTime(0:00)
+board -> display : stopUpdatingDepartureTime()
+
+database databaseConnection
+board -> databaseConnection : getArrivalTimeByID(trainID)
+databaseConnection --> board : compare with current global time
+board -> databaseConnection : saveAsScheduleViolation(trainID)
+
+Train -> board : departs
+board -> display : startUpdatingDepartureTime()
+
+database databaseConnection
+board -> databaseConnection : getNextTrainID(trainID)
+board -> databaseConnection : getEndStation(newTrainID)
+board -> display : updateEndStation()
+
+@enduml

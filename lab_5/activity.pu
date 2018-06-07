@@ -1,0 +1,28 @@
+@startuml
+start
+
+:arrivalSensor.onActivation();
+-> runs;
+
+:display.updateDepartureTime(0:00);
+:stopUpdatingDepartureTime();
+
+if (database.getArrivalTimeByID(trainID) != globalTime) then (true)
+	:database.saveAsViolation(trainID, globalTime - database.getArrivalTimeByID(trainID));
+endif
+
+stop
+
+start
+
+:departureSensor.onActivation();
+-> runs;
+
+:startUpdatingDepartureTime();
+:nextTrainID = getNextTrainID(trainID);
+:nextStation = getEndStation(newTrainID);
+:display.updateEndStation(nextStation);
+
+stop
+
+@enduml

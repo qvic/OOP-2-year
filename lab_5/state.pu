@@ -1,0 +1,25 @@
+@startuml
+
+state Active {
+	state "Train arrived" as arrival
+	state "Train departed" as departure
+
+	[*] -> Wait
+	Wait -> Wait : 1s PASS / updateLastDepartureTime() by 1s
+
+	Wait ---> arrival : arrivalSensor ACTIVATED / update nextTrainId from db \n updateLastDepartureTime() to 0:00 \n save as schedule violation \n if time doesn't match with getArrivalTimeById()
+
+	arrival -> departure : departureSensor ACTIVATED
+	departure ---> Wait : get endStation from db and updateEndStation()
+
+	--
+
+	state "Ad Handling" as ads
+
+	[*] -> Idle
+	Idle -> Idle : ControlUnit ANY REQUEST / do update or send corresponding data
+	Idle ---> ads : SOME TIME PASSES
+	ads ---> Idle : get ad from db and updateAd()
+}
+
+@enduml
