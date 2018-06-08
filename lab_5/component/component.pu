@@ -3,7 +3,7 @@ node {
 	database Database
 	node Display
 	node Sensors
-	[Board] <-- Database
+	[Board] <--> Database
 	[Board] --> Display
 	[Board] <-- Sensors
 } 

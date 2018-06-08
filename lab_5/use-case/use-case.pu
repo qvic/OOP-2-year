@@ -8,11 +8,16 @@ actor :Control Unit: as CU
 rectangle Board {
 
 Train -- (Commit train arrival) : arrives
+Train -- (Commit train departure) : departs
 
 note "if arrival time doesn't match with schedule time" as ifNote
 (Commit train arrival) . ifNote
 ifNote .> (Save as schedule violation) : <<include>>
-(Commit train arrival) ..> (Update last departure time) : <<include>>
+(Commit train arrival) ..> (Reset last departure time \n and stop ticking) : <<include>>
+
+(Commit train departure) ..> (Start ticking last departure time) : <<include>>
+(Commit train departure) ..> (Update end station) : <<include>>
+
 
 CU -- (Send schedule violations data) : requests schedule violations
 CU -- (Apply schedule updates) : sends schedule updates

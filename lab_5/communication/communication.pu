@@ -1,0 +1,38 @@
+@startuml
+start
+if () then
+	-> board.arrivalSensor.onActivation();
+	:board;
+	-> board.display;
+	:display;
+	-> updateDepartureTime(0:00);
+	:display;
+	-> stopUpdatingDepartureTime();
+	:board;
+	-> board.databaseConnection;
+	:databaseConnection;
+	-> getArrivalTimeByID(trainID);
+	:scheduleArrivalTime;
+	if (scheduleArrivalTime != globalTime) then
+		-> board.databaseConnection;
+		:databaseConnection;
+		-> saveAsScheduleViolation(trainID);
+		:databaseConnection;
+	endif
+else
+	-> board.departureSensor.onActivation();
+	:board;
+	-> startUpdatingDepartureTime();
+	:board;
+	-> board.databaseConnection;
+	:databaseConnection;
+	-> getNextTrainID(trainID);
+	:databaseConnection;
+	-> getEndStation(newTrainID);	
+	:board;
+	-> board.display;
+	:display;
+	-> updateEndStation(newEndStation);
+	:display;
+endif
+@enduml

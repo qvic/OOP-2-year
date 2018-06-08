@@ -1,0 +1,14 @@
+@startuml
+node ControlUnit
+node Board1
+node Board2
+database Database1
+database Database2
+
+ControlUnit .. Board1
+ControlUnit .. Board2
+
+Board1 -down- Database1
+Board2 -down- Database2
+
+@enduml
