@@ -1,9 +1,5 @@
 package controllers;
 
-import com.jcraft.jsch.Session;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -13,14 +9,13 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import models.GitWrapper;
+import models.GroupedTableView;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PullCommand;
 import org.eclipse.jgit.api.PullResult;
-import org.eclipse.jgit.api.TransportConfigCallback;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.Config;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.transport.*;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.util.StringUtils;
 
 import java.io.File;
@@ -30,7 +25,6 @@ import java.util.*;
 import java.util.function.Consumer;
 
 public class MainController implements Initializable {
-    public static final String DEFAULT_GROUP = "Default";
 
     @FXML
     TreeTableView<GitWrapper> groupsTable;
@@ -47,30 +41,18 @@ public class MainController implements Initializable {
     @FXML
     Button executeButton;
 
-    private TreeItem<GitWrapper> root;
+    private GroupedTableView table;
 
     private void onAddRepoAction(ActionEvent actionEvent) {
         DirectoryChooser chooser = new DirectoryChooser();
         chooser.setTitle("Open git repository");
-        chooser.setInitialDirectory(
-                new File(System.getProperty("user.home"))
-        );
+        chooser.setInitialDirectory(new File(System.getProperty("user.home")));
+
         File selectedDirectory = chooser.showDialog(addRepoButton.getScene().getWindow());
         if (selectedDirectory == null) return;
 
         try (Git git = Git.open(selectedDirectory)) {
-            TreeItem<GitWrapper> newItem = new TreeItem<>(
-                    new GitWrapper(git, git.getRepository().getDirectory().getParentFile().getName()));
-
-            TreeItem<GitWrapper> selectedItem = groupsTable.getSelectionModel().getSelectedItem();
-            if (selectedItem != null) {
-                TreeItem<GitWrapper> group = getGroup(selectedItem);
-                group.setExpanded(true);
-                group.getChildren().add(newItem);
-            } else {
-                root.getChildren().get(0).setExpanded(true);
-                root.getChildren().get(0).getChildren().add(newItem);
-            }
+            table.addToSelectedGroup(git);
         } catch (IOException e) {
             showAlert("Not a repository!", e.getMessage(), Alert.AlertType.ERROR);
         }
@@ -85,8 +67,7 @@ public class MainController implements Initializable {
 
         Optional<String> result = dialog.showAndWait();
         result.ifPresent(name -> {
-            TreeItem<GitWrapper> item = new TreeItem<>(new GitWrapper(null, name));
-            root.getChildren().add(item);
+            table.addGroup(name);
         });
     }
 
@@ -95,14 +76,7 @@ public class MainController implements Initializable {
         choices.add("status");
         choices.add("pull");
 
-        TreeItem<GitWrapper> selectedItem = groupsTable.getSelectionModel().getSelectedItem(), selectedGroup;
-        if (selectedItem == null || selectedItem.getParent() == null) {
-            selectedGroup = root.getChildren().get(0);
-        } else if (isRepository(selectedItem)) {
-            selectedGroup = selectedItem.getParent();
-        } else {
-            selectedGroup = selectedItem;
-        }
+        TreeItem<GitWrapper> selectedGroup = table.getSelectedGroup();
 
         ChoiceDialog<String> dialog = new ChoiceDialog<>("status", choices);
         dialog.setTitle("Execute");
@@ -114,37 +88,39 @@ public class MainController implements Initializable {
             if (command.equals("status")) {
                 for (TreeItem<GitWrapper> item : selectedGroup.getChildren()) {
                     try {
-                        showAlert("Status of " + item.getValue().getName(),
-                                String.valueOf(item.getValue().getGit().status().call().getUncommittedChanges()),
-                                Alert.AlertType.INFORMATION);
+                        if (item.getValue().getGit().isPresent()) {
+                            showAlert("Status of " + item.getValue().getName(),
+                                    String.valueOf(item.getValue().getGit().get().status().call().getUncommittedChanges()),
+                                    Alert.AlertType.INFORMATION);
+                        }
                     } catch (GitAPIException e) {
                         showAlert("Git API Exception", e.getMessage(), Alert.AlertType.ERROR);
                     }
                 }
             } else if (command.equals("pull")) {
                 showTokenInput(token -> {
+                            for (TreeItem<GitWrapper> item : selectedGroup.getChildren()) {
+                                if (!item.getValue().getGit().isPresent()) continue;
 
-                    for (TreeItem<GitWrapper> item : selectedGroup.getChildren()) {
-                        PullCommand pullCommand = item.getValue().getGit().pull();
-                        pullCommand.setRemote("origin");
-                        pullCommand.setCredentialsProvider(new UsernamePasswordCredentialsProvider(token, ""));
-                        try {
-                            PullResult pullResult = pullCommand.call();
-                            if (pullResult.isSuccessful()) {
-                                showAlert("Successfully pulled",
-                                        "Pulled " + pullCommand.getRemote(),
-                                        Alert.AlertType.INFORMATION);
-                            } else {
-                                showAlert("Unsuccessful", null, Alert.AlertType.WARNING);
+                                PullCommand pullCommand = item.getValue().getGit().get().pull();
+                                pullCommand.setCredentialsProvider(new UsernamePasswordCredentialsProvider(token, ""));
+                                try {
+                                    PullResult pullResult = pullCommand.call();
+                                    if (pullResult.isSuccessful()) {
+                                        showAlert("Successfully pulled",
+                                                "Pulled " + pullCommand.getRemote(),
+                                                Alert.AlertType.INFORMATION);
+                                    } else {
+                                        showAlert("Unsuccessful", null, Alert.AlertType.WARNING);
+                                    }
+                                } catch (GitAPIException e) {
+                                    e.printStackTrace();
+                                    showAlert("Git API Exception", e.getMessage(), Alert.AlertType.ERROR);
+                                }
                             }
-                        } catch (GitAPIException e) {
-                            e.printStackTrace();
-                            showAlert("Git API Exception", e.getMessage(), Alert.AlertType.ERROR);
                         }
-                    }
-                });
+                );
             }
-
         });
     }
 
@@ -154,12 +130,7 @@ public class MainController implements Initializable {
 
         dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
 
-        TreeItem<GitWrapper> selectedItem = groupsTable.getSelectionModel().getSelectedItem();
-        if (selectedItem == null || selectedItem.getParent() == null) {
-            selectedItem = root.getChildren().get(0);
-        } else if (isRepository(selectedItem)) {
-            selectedItem = selectedItem.getParent();
-        }
+        TreeItem<GitWrapper> selectedGroup = table.getSelectedGroup();
 
         VBox content = new VBox();
         ScrollPane scrollPane = new ScrollPane();
@@ -168,25 +139,27 @@ public class MainController implements Initializable {
         scrollPane.setPrefHeight(600);
 
         PieChart commitsChart = new PieChart();
-        content.getChildren().add(new Label("Commits statistics for " + selectedItem.getValue().getName()));
+        content.getChildren().add(new Label("Commits statistics for " + selectedGroup.getValue().getName()));
         content.getChildren().add(commitsChart);
 
         PieChart usersChart = new PieChart();
-        content.getChildren().add(new Label("Users statistics for " + selectedItem.getValue().getName()));
+        content.getChildren().add(new Label("Users statistics for " + selectedGroup.getValue().getName()));
         content.getChildren().add(usersChart);
 
         HashMap<String, Integer> commitsByUsers = new HashMap<>();
 
         Iterable<TreeItem<GitWrapper>> items;
-        items = selectedItem.getChildren();
+        items = selectedGroup.getChildren();
 
         for (TreeItem<GitWrapper> gitWrapperTreeItem : items) {
 
-            Git git = gitWrapperTreeItem.getValue().getGit();
+            Optional<Git> git = gitWrapperTreeItem.getValue().getGit();
+            if (!git.isPresent()) continue;
+
             int count = 0;
             Iterable<RevCommit> commits;
             try {
-                commits = git.log().call();
+                commits = git.get().log().call();
             } catch (GitAPIException e) {
                 showAlert("Git API Exception", e.getMessage(), Alert.AlertType.ERROR);
                 return;
@@ -228,56 +201,11 @@ public class MainController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        root = new TreeItem<>();
-        root.setExpanded(true);
-        groupsTable.setShowRoot(false);
-        groupsTable.setRoot(root);
-
-        TreeItem<GitWrapper> defaultGroup = new TreeItem<>(new GitWrapper(null, DEFAULT_GROUP));
-        defaultGroup.setExpanded(true);
-        root.getChildren().add(defaultGroup);
-
-        TreeTableColumn<GitWrapper, String> nameColumn = new TreeTableColumn<>("Name");
-        nameColumn.setPrefWidth(200);
-
-        nameColumn.setCellValueFactory((TreeTableColumn.CellDataFeatures<GitWrapper, String> p) ->
-                new ReadOnlyStringWrapper(p.getValue().getValue().getName()));
-
-        TreeTableColumn<GitWrapper, String> usernameColumn = new TreeTableColumn<>("Username");
-        usernameColumn.setPrefWidth(100);
-
-        usernameColumn.setCellValueFactory((TreeTableColumn.CellDataFeatures<GitWrapper, String> p) -> {
-            Git git = p.getValue().getValue().getGit();
-            if (git == null) return new ReadOnlyStringWrapper("");
-
-            Config config = p.getValue().getValue().getGit().getRepository().getConfig();
-            return new ReadOnlyStringWrapper(config.getString("user", null, "name"));
-        });
-
-        TreeTableColumn<GitWrapper, Date> lastEditedColumn = new TreeTableColumn<>("Last edited");
-        lastEditedColumn.setPrefWidth(200);
-
-        lastEditedColumn.setCellValueFactory((TreeTableColumn.CellDataFeatures<GitWrapper, Date> p) -> {
-            Git git = p.getValue().getValue().getGit();
-            if (git == null) return null;
-
-            Date date = null;
-            try {
-                RevCommit commit = p.getValue().getValue().getGit().log().call().iterator().next();
-                date = commit.getAuthorIdent().getWhen();
-            } catch (GitAPIException e) {
-                e.printStackTrace();
-            }
-            return new ReadOnlyObjectWrapper<>(date);
-        });
-
-        groupsTable.getColumns().add(nameColumn);
-        groupsTable.getColumns().add(usernameColumn);
-        groupsTable.getColumns().add(lastEditedColumn);
-
-        groupsTable.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+        table = new GroupedTableView(groupsTable);
+        table.addSelectionListener((observable, oldValue, newValue) -> {
             if (newValue == null || newValue.getParent() == null) return;
-            TreeItem<GitWrapper> group = getGroup(newValue);
+
+            TreeItem<GitWrapper> group = table.getGroupFor(newValue);
             addRepoButton.setText("Add to " + group.getValue().getName());
             executeButton.setText("Execute for " + group.getValue().getName());
         });
@@ -286,21 +214,6 @@ public class MainController implements Initializable {
         addRepoButton.setOnAction(this::onAddRepoAction);
         addGroupButton.setOnAction(this::onAddGroupAction);
         executeButton.setOnAction(this::onExecuteAction);
-    }
-
-    private boolean isGroup(TreeItem<GitWrapper> item) {
-        return item.getParent() == root;
-    }
-
-    private boolean isRepository(TreeItem<GitWrapper> item) {
-        return !isGroup(item);
-    }
-
-    private TreeItem<GitWrapper> getGroup(TreeItem<GitWrapper> item) {
-        if (isGroup(item)) {
-            return item;
-        }
-        return item.getParent();
     }
 }
 
